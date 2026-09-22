@@ -55,7 +55,7 @@ export function Profile({ onDemo }: { onDemo: () => void }) {
               <i className="tnum">{money(Math.round(inObjects))}</i>
             </span>
             <span>
-              <b>{t(ui.free)}</b>
+              <b>{t(ui.freeShort)}</b>
               <i className="tnum">{money(cash)}</i>
             </span>
           </div>
