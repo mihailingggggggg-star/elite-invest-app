@@ -1,29 +1,42 @@
 /**
- * iOS 26 "liquid glass" displacement filter.
+ * Liquid glass material.
  *
- * Vendored from nikdelvin/liquid-glass (MIT, © 2025 Nikita Stadnik)
- * https://github.com/nikdelvin/liquid-glass
+ * Assembled from three open implementations:
  *
- * The technique: build an SVG displacement map as a data URI, feed it to three
- * feDisplacementMap passes (one per colour channel, at slightly different
- * scales, which is what produces the chromatic fringe along the rim), then use
- * the whole filter as a `backdrop-filter`. The glass therefore refracts the
- * real page behind it rather than faking it with a blur.
+ * 1. nikdelvin/liquid-glass (MIT, © 2025 Nikita Stadnik)
+ *    https://github.com/nikdelvin/liquid-glass
+ *    The displacement map fed to `backdrop-filter`, so the glass refracts the
+ *    real page behind it instead of faking it with blur.
+ *
+ * 2. Kyant0/AndroidLiquidGlass (Apache-2.0, © Kyant)
+ *    https://github.com/Kyant0/AndroidLiquidGlass
+ *    Its material vocabulary — `refractionHeight` (how wide the bending rim
+ *    is), `refractionAmount` (how hard it bends) and corner-weighted
+ *    dispersion, which is what keeps the chromatic fringe in the corners
+ *    where a real lens puts it.
+ *
+ * 3. rdev/liquid-glass-react (MIT, © 2025 Max Rovensky)
+ *    https://github.com/rdev/liquid-glass-react
+ *    The two masked gradient bezels (screen + overlay) and the radial press
+ *    highlight — see Bezel in components/Glass.tsx.
  */
 
 type MapOptions = {
   width: number;
   height: number;
   radius: number;
-  depth: number;
+  /** Width of the refracting rim in px (Kyant0: refractionHeight). */
+  refractionHeight: number;
 };
 
 type FilterOptions = MapOptions & {
-  strength?: number;
-  chromaticAberration?: number;
+  /** How hard the rim bends the backdrop (Kyant0: refractionAmount). */
+  refractionAmount?: number;
+  /** Chromatic dispersion, strongest at the corners. */
+  dispersion?: number;
 };
 
-const displacementMap = ({ width, height, radius, depth }: MapOptions) =>
+const displacementMap = ({ width, height, radius, refractionHeight: d }: MapOptions) =>
   "data:image/svg+xml;utf8," +
   encodeURIComponent(`<svg height="${height}" width="${width}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
   <style>.mix { mix-blend-mode: screen; }</style>
@@ -40,7 +53,7 @@ const displacementMap = ({ width, height, radius, depth }: MapOptions) =>
     <rect x="0" y="0" height="${height}" width="${width}" fill="#000080" />
     <rect x="0" y="0" height="${height}" width="${width}" fill="url(#Y)" class="mix" />
     <rect x="0" y="0" height="${height}" width="${width}" fill="url(#X)" class="mix" />
-    <rect x="${depth}" y="${depth}" height="${height - 2 * depth}" width="${width - 2 * depth}" fill="#808080" rx="${radius}" ry="${radius}" filter="blur(${depth}px)" />
+    <rect x="${d}" y="${d}" height="${height - 2 * d}" width="${width - 2 * d}" fill="#808080" rx="${radius}" ry="${radius}" filter="blur(${d}px)" />
   </g>
 </svg>`);
 
@@ -48,12 +61,12 @@ export const displacementFilter = ({
   width,
   height,
   radius,
-  depth,
-  strength = 100,
-  chromaticAberration = 0,
+  refractionHeight,
+  refractionAmount = 46,
+  dispersion = 0,
 }: FilterOptions) => {
-  const map = displacementMap({ width, height, radius, depth });
-  const pass = (scale: number, matrix: string, result: string) => `
+  const map = displacementMap({ width, height, radius, refractionHeight });
+  const channel = (scale: number, matrix: string, result: string) => `
     <feDisplacementMap in="SourceGraphic" in2="displacementMap" scale="${scale}" xChannelSelector="R" yChannelSelector="G" />
     <feColorMatrix type="matrix" values="${matrix}" result="${result}" />`;
 
@@ -63,11 +76,11 @@ export const displacementFilter = ({
   <defs>
     <filter id="displace" color-interpolation-filters="sRGB">
       <feImage x="0" y="0" height="${height}" width="${width}" href="${map}" result="displacementMap" />
-      ${pass(strength + chromaticAberration * 2, "1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0", "displacedR")}
-      ${pass(strength + chromaticAberration, "0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0", "displacedG")}
-      ${pass(strength, "0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0", "displacedB")}
-      <feBlend in="displacedR" in2="displacedG" mode="screen" />
-      <feBlend in2="displacedB" mode="screen" />
+      ${channel(refractionAmount + dispersion * 2, "1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0", "dR")}
+      ${channel(refractionAmount + dispersion, "0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0", "dG")}
+      ${channel(refractionAmount, "0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0", "dB")}
+      <feBlend in="dR" in2="dG" mode="screen" />
+      <feBlend in2="dB" mode="screen" />
     </filter>
   </defs>
 </svg>`) +
@@ -80,7 +93,9 @@ export const supportsGlass = () => {
   if (typeof document === "undefined") return false;
   const el = document.createElement("div");
   el.style.cssText = "backdrop-filter: url(#x)";
-  return el.style.backdropFilter === "url(#x)" ||
+  return (
+    el.style.backdropFilter === "url(#x)" ||
     (el.style as CSSStyleDeclaration & { webkitBackdropFilter?: string })
-      .webkitBackdropFilter === "url(#x)";
+      .webkitBackdropFilter === "url(#x)"
+  );
 };

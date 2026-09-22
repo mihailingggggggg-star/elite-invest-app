@@ -3,18 +3,48 @@ import type { CSSProperties, ReactNode } from "react";
 import { displacementFilter, supportsGlass } from "../lib/liquidGlass";
 
 /**
- * A liquid-glass surface. Measures itself, builds the matching displacement
- * filter and refracts whatever is behind it. Browsers without
- * `backdrop-filter: url()` (Safari) keep a plain blur, which still reads as
- * glass — just without the rim distortion.
+ * The bezel: two gradient rings drawn only on the border, one blended with
+ * `screen` and one with `overlay`. Lifted from rdev/liquid-glass-react (MIT) —
+ * this pair is what makes an edge read as thick glass rather than a 1px line.
+ */
+function Bezel({ radius }: { radius: number }) {
+  const ring: CSSProperties = {
+    position: "absolute",
+    inset: 0,
+    borderRadius: radius,
+    padding: 1.5,
+    pointerEvents: "none",
+    WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+    WebkitMaskComposite: "xor",
+    maskComposite: "exclude",
+  };
+  const light =
+    "linear-gradient(140deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.14) 32%, rgba(255,255,255,0.42) 68%, rgba(255,255,255,0) 100%)";
+
+  return (
+    <>
+      <span aria-hidden style={{ ...ring, mixBlendMode: "screen", opacity: 0.22, background: light }} />
+      <span aria-hidden style={{ ...ring, mixBlendMode: "overlay", background: light }} />
+    </>
+  );
+}
+
+/**
+ * A liquid-glass surface: refracting backdrop + bezel + press highlight.
+ * Browsers without `backdrop-filter: url()` keep a plain blur, which still
+ * reads as glass — only without the rim distortion.
  */
 export function Glass({
   children,
-  radius = 26,
-  depth = 8,
-  strength = 46,
-  chromaticAberration = 3,
-  blur = 12,
+  radius = 24,
+  /** Width of the refracting rim, px (Kyant0: refractionHeight). */
+  refractionHeight = 8,
+  /** How hard the rim bends the backdrop (Kyant0: refractionAmount). */
+  refractionAmount = 40,
+  dispersion = 2,
+  blur = 14,
+  saturation = 1.6,
+  bezel = true,
   className = "",
   style,
   as: Tag = "div",
@@ -22,13 +52,15 @@ export function Glass({
 }: {
   children?: ReactNode;
   radius?: number;
-  depth?: number;
-  strength?: number;
-  chromaticAberration?: number;
+  refractionHeight?: number;
+  refractionAmount?: number;
+  dispersion?: number;
   blur?: number;
+  saturation?: number;
+  bezel?: boolean;
   className?: string;
   style?: CSSProperties;
-  as?: "div" | "section" | "header" | "button" | "span" | "nav";
+  as?: "div" | "section" | "header" | "button" | "span" | "nav" | "a";
 } & Omit<React.HTMLAttributes<HTMLElement>, "style">) {
   const ref = useRef<HTMLElement>(null);
   const [box, setBox] = useState({ w: 0, h: 0 });
@@ -57,11 +89,11 @@ export function Glass({
           width: box.w,
           height: box.h,
           radius,
-          depth,
-          strength,
-          chromaticAberration,
-        })}") blur(${blur / 10}px) saturate(1.5) brightness(1.06)`
-      : `blur(${blur}px) saturate(1.7)`;
+          refractionHeight,
+          refractionAmount,
+          dispersion,
+        })}") blur(${blur / 12}px) saturate(${saturation})`
+      : `blur(${blur}px) saturate(${saturation})`;
 
   return (
     <Tag
@@ -75,6 +107,7 @@ export function Glass({
       }}
       {...rest}
     >
+      {bezel && <Bezel radius={radius} />}
       {children}
     </Tag>
   );

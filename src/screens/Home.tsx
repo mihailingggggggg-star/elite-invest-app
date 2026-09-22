@@ -2,15 +2,17 @@ import { motion } from "framer-motion";
 import { assetById, cash, holdings, news, ui } from "../lib/data";
 import { money, num, pct, useApp, useT } from "../lib/app";
 import { Glass } from "../components/Glass";
-import { IcArrow, IcClock, IcOut, IcPie } from "../components/Icons";
+import { IcClock, IcOut, IcPie } from "../components/Icons";
 import { Brand } from "../components/Brand";
 
 export function Home({
   onAsset,
   onStats,
+  onHistory,
 }: {
   onAsset: (id: string) => void;
   onStats: () => void;
+  onHistory: () => void;
 }) {
   const t = useT();
   const { lang } = useApp();
@@ -48,7 +50,7 @@ export function Home({
 
         <div className="quick">
           <Glass className="tap" radius={20} style={{ padding: 0 }}>
-            <button style={{ display: "flex", width: "100%", alignItems: "center", gap: 10, padding: "14px 16px", fontWeight: 700, fontSize: 14 }}>
+            <button onClick={onHistory} style={{ display: "flex", width: "100%", alignItems: "center", gap: 10, padding: "14px 16px", fontWeight: 700, fontSize: 14 }}>
               <span className="quick__i"><IcClock /></span>
               {t(ui.history)}
             </button>
@@ -110,16 +112,21 @@ export function Home({
             transition={{ duration: 0.45, delay: 0.05 + i * 0.05, ease: [0.22, 1, 0.36, 1] }}
           >
             <Glass className="ncard" radius={20}>
-              <div className="ncard__h">
-                <span className="ncard__tag">{n.tag[lang]}</span>
-                <span>{n.date}</span>
-                <span>· {n.source}</span>
+              <div className="ncard__img">
+                <img src={`${import.meta.env.BASE_URL}obj/${n.img}`} alt="" loading="lazy" />
               </div>
-              <h4>{n.title[lang]}</h4>
-              <p>{n.text[lang]}</p>
-              <a href={n.url} target="_blank" rel="noreferrer">
-                {t(ui.readSource)} <IcOut />
-              </a>
+              <div className="ncard__b">
+                <div className="ncard__h">
+                  <span className="ncard__tag">{n.tag[lang]}</span>
+                  <span>{n.date}</span>
+                  <span>· {n.source}</span>
+                </div>
+                <h4>{n.title[lang]}</h4>
+                <p>{n.text[lang]}</p>
+                <a href={n.url} target="_blank" rel="noreferrer">
+                  {t(ui.readSource)} <IcOut />
+                </a>
+              </div>
             </Glass>
           </motion.div>
         ))}
@@ -129,5 +136,3 @@ export function Home({
     </div>
   );
 }
-
-export { IcArrow };

@@ -1,36 +1,22 @@
-import { motion } from "framer-motion";
-import { ui } from "../lib/data";
-import { useApp, useT } from "../lib/app";
-import { IcMoon, IcSun } from "./Icons";
+import { Glass } from "./Glass";
 import { LogoInvest } from "./Logo";
 
-/** App header: the mark, then the two switches people look for first. */
-export function Brand() {
-  const { lang, setLang, theme, setTheme } = useApp();
-  const t = useT();
-
+/**
+ * Screen header. Language and theme used to live here as 32px pills pinned to
+ * the very top edge — too small to hit reliably on a phone, and under the
+ * status bar on a notched device. They now sit in the profile, where they
+ * belong, and the header carries only the mark.
+ */
+export function Brand({ right }: { right?: React.ReactNode }) {
   return (
     <div className="top">
       <LogoInvest width={88} />
       <span className="sp" />
-
-      <div className="seg" role="group" aria-label={t(ui.language)}>
-        {(["ky", "ru"] as const).map((v) => (
-          <button key={v} data-on={lang === v} onClick={() => setLang(v)} aria-label={v}>
-            {lang === v && <motion.span className="seg__pill" layoutId="seg-lang" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
-            {v === "ky" ? "KG" : "RU"}
-          </button>
-        ))}
-      </div>
-
-      <div className="seg" role="group" aria-label={t(ui.theme)}>
-        {(["dark", "light"] as const).map((v) => (
-          <button key={v} data-on={theme === v} onClick={() => setTheme(v)} aria-label={v}>
-            {theme === v && <motion.span className="seg__pill" layoutId="seg-theme" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
-            {v === "dark" ? <IcMoon /> : <IcSun />}
-          </button>
-        ))}
-      </div>
+      {right ?? (
+        <Glass className="chip-badge" radius={999} refractionHeight={5} refractionAmount={22} blur={10}>
+          Demo
+        </Glass>
+      )}
     </div>
   );
 }

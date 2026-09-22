@@ -132,15 +132,20 @@ export function Asset({
             <div className="news">
               {news.slice(0, 3).map((n, i) => (
                 <Glass className="ncard" radius={20} key={i}>
-                  <div className="ncard__h">
-                    <span className="ncard__tag">{n.tag[lang]}</span>
-                    <span>{n.date} · {n.source}</span>
+                  <div className="ncard__img">
+                    <img src={`${import.meta.env.BASE_URL}obj/${n.img}`} alt="" loading="lazy" />
                   </div>
-                  <h4>{n.title[lang]}</h4>
-                  <p>{n.text[lang]}</p>
-                  <a href={n.url} target="_blank" rel="noreferrer">
-                    {t(ui.readSource)} <IcOut />
-                  </a>
+                  <div className="ncard__b">
+                    <div className="ncard__h">
+                      <span className="ncard__tag">{n.tag[lang]}</span>
+                      <span>{n.date} · {n.source}</span>
+                    </div>
+                    <h4>{n.title[lang]}</h4>
+                    <p>{n.text[lang]}</p>
+                    <a href={n.url} target="_blank" rel="noreferrer">
+                      {t(ui.readSource)} <IcOut />
+                    </a>
+                  </div>
                 </Glass>
               ))}
             </div>

@@ -28,9 +28,23 @@ Kerege Resort) и шесть строящихся объектов Elite House. 
 ## Дизайн
 
 Нижний тулбар с круглой кнопкой «+» по центру повторяет референс заказчика.
-Liquid glass в стиле iOS 26 — техника из
-[nikdelvin/liquid-glass](https://github.com/nikdelvin/liquid-glass) (MIT):
-SVG-карта смещения в `backdrop-filter`. Анимации — framer-motion.
+Liquid glass собран из трёх открытых реализаций:
+
+- [nikdelvin/liquid-glass](https://github.com/nikdelvin/liquid-glass) (MIT) —
+  SVG-карта смещения в `backdrop-filter`: стекло преломляет саму страницу.
+- [Kyant0/AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass) (Apache-2.0) —
+  модель материала: `refractionHeight`, `refractionAmount` и дисперсия,
+  усиленная по углам, как у настоящей линзы.
+- [rdev/liquid-glass-react](https://github.com/rdev/liquid-glass-react) (MIT) —
+  двойная маскированная кромка (screen + overlay) и радиальный блик нажатия.
+
+Код материала — [src/lib/liquidGlass.ts](src/lib/liquidGlass.ts) и
+[src/components/Glass.tsx](src/components/Glass.tsx). Структура кнопок и
+контейнеров ориентируется на
+[dashersw/liquid-glass-js](https://github.com/dashersw/liquid-glass-js) (MIT).
+
+Оранжевый — только тонкий акцент: логотип, число доходности, активная вкладка.
+Все заливки и кнопки нейтральные, без свечения. Анимации — framer-motion.
 
 ## Разработка
 

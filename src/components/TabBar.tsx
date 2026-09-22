@@ -38,14 +38,12 @@ export function TabBar({
         ))}
       </nav>
 
-      <motion.button
-        className="fab"
-        onClick={onAdd}
-        aria-label={t(ui.tabAdd)}
-        whileTap={{ scale: 0.9 }}
-      >
+      {/* Плоская кнопка: framer-motion переписывает transform целиком и
+          сбивает центрирующий translateX(-50%), из-за чего «плюс» уезжал
+          вправо после каждого нажатия. Отклик даём тенью в CSS. */}
+      <button className="fab" onClick={onAdd} aria-label={t(ui.tabAdd)}>
         <IcPlus size={26} />
-      </motion.button>
+      </button>
       <span className="fab__label">{t(ui.tabAdd)}</span>
     </>
   );

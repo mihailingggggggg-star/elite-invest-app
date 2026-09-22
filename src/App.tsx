@@ -10,24 +10,38 @@ import { Profile } from "./screens/Profile";
 import { Asset } from "./screens/Asset";
 import { DemoStub, TopUp, Trade } from "./screens/Flows";
 
+/** localStorage бросает исключение в приватной вкладке — старт от этого не падает. */
+function read(key: string, allowed: string[], fallback: string) {
+  try {
+    const v = localStorage.getItem(key);
+    return v && allowed.includes(v) ? v : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export default function Root() {
-  const [lang, setLang] = useState<Lang>(() => {
-    const v = localStorage.getItem("ei-lang");
-    return v === "ru" || v === "ky" ? v : "ky";
-  });
-  const [theme, setTheme] = useState<Theme>(() => {
-    const v = localStorage.getItem("ei-theme");
-    return v === "light" || v === "dark" ? v : "dark";
-  });
+  const [lang, setLang] = useState<Lang>(() => read("ei-lang", ["ru", "ky"], "ky") as Lang);
+  const [theme, setTheme] = useState<Theme>(() => read("ei-theme", ["light", "dark"], "dark") as Theme);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem("ei-theme", theme);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", theme === "light" ? "#f1f0f3" : "#08080b");
+    try {
+      localStorage.setItem("ei-theme", theme);
+    } catch {
+      /* приватный режим — настройка просто не переживёт перезапуск */
+    }
   }, [theme]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
-    localStorage.setItem("ei-lang", lang);
+    try {
+      localStorage.setItem("ei-lang", lang);
+    } catch {
+      /* см. выше */
+    }
   }, [lang]);
 
   const ctx = useMemo(() => ({ lang, setLang, theme, setTheme }), [lang, theme]);
@@ -61,7 +75,7 @@ function Shell() {
           transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
           style={{ position: "absolute", inset: 0, zIndex: 1 }}
         >
-          {tab === "home" && <Home onAsset={setAsset} onStats={() => setTab("stats")} />}
+          {tab === "home" && <Home onAsset={setAsset} onStats={() => setTab("stats")} onHistory={() => setStub(true)} />}
           {tab === "market" && <Market onAsset={setAsset} />}
           {tab === "stats" && <Stats />}
           {tab === "profile" && <Profile onDemo={() => setStub(true)} />}

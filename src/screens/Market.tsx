@@ -66,7 +66,7 @@ export function Market({ onAsset }: { onAsset: (id: string) => void }) {
                 <img src={`${import.meta.env.BASE_URL}obj/${a.img}`} alt="" loading="lazy" />
                 <div className="mcard__tags">
                   <span className="tag tag--y">
-                    {a.yieldPct}% {t(ui.yieldY)}
+                    <b>{a.yieldPct}%</b> {t(ui.yieldY)}
                   </span>
                   <span className="tag">{a.city[lang]}</span>
                   <span className="tag">{a.kind[lang]}</span>

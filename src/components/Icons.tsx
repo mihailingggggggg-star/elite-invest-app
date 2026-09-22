@@ -110,3 +110,10 @@ export const IcMoon = ({ size }: P) => (
     <path d="M20 14.5A8.6 8.6 0 0 1 9.5 4 8.6 8.6 0 1 0 20 14.5Z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
   </svg>
 );
+
+export const IcGlobe = ({ size }: P) => (
+  <svg {...s(size ?? 18)} aria-hidden>
+    <circle cx="12" cy="12" r="8.4" stroke="currentColor" strokeWidth="1.7" />
+    <path d="M3.6 12h16.8M12 3.6c2.1 2.3 3.2 5.2 3.2 8.4s-1.1 6.1-3.2 8.4c-2.1-2.3-3.2-5.2-3.2-8.4S9.9 5.9 12 3.6Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+  </svg>
+);

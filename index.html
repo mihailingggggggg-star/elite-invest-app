@@ -13,6 +13,20 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      /* Тема и язык выставляются до первой отрисовки, иначе при сохранённой
+         светлой теме экран успевает моргнуть чёрным. */
+      try {
+        var t = localStorage.getItem("ei-theme");
+        if (t === "light" || t === "dark") {
+          document.documentElement.dataset.theme = t;
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.content = t === "light" ? "#f1f0f3" : "#08080b";
+        }
+        var l = localStorage.getItem("ei-lang");
+        if (l === "ru" || l === "ky") document.documentElement.lang = l;
+      } catch (e) {}
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
