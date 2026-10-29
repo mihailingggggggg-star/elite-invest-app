@@ -221,7 +221,13 @@ function Shell() {
       <AnimatePresence>
         {kyc && (
           <Suspense key="kyc" fallback={null}>
-            <Kyc onClose={() => setKyc(false)} onDone={onKycDone} />
+            <Kyc
+              onClose={() => {
+                pending.current = null;
+                setKyc(false);
+              }}
+              onDone={onKycDone}
+            />
           </Suspense>
         )}
       </AnimatePresence>

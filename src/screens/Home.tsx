@@ -47,12 +47,14 @@ export function Home({
                 <div className="pf__v tnum">
                   {money(Math.round(total))} <small>USD</small>
                 </div>
-                <div className="pf__d">
-                  <span className="up">
-                    +{money(Math.round(acc))} ({pct(diffPct)})
-                  </span>
-                  <em>{t(ui.allTime)}</em>
-                </div>
+                {body > 0 && (
+                  <div className="pf__d">
+                    <span className="up">
+                      +{money(Math.round(acc))} ({pct(diffPct)})
+                    </span>
+                    <em>{t(ui.allTime)}</em>
+                  </div>
+                )}
               </Glass>
             </motion.div>
 
@@ -96,6 +98,17 @@ export function Home({
             <span>{contractsWord(contracts.length, lang)}</span>
           </h2>
           <div className="pad rows">
+            {contracts.length === 0 && (
+              <Glass className="kpi" radius={20}>
+                <b>{t(ui.noContractsYet)}</b>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "var(--txt-2)", letterSpacing: 0 }}>
+                  {t(ui.noContractsHint)}
+                </span>
+                <button className="btn btn--s btn--sm" style={{ marginTop: 12 }} onClick={onBrowse}>
+                  {t(ui.guestBrowse)}
+                </button>
+              </Glass>
+            )}
             {contracts.map((c, i) => {
               const a = assetById(c.assetId);
               const val = contractValue(c, now);
