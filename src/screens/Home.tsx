@@ -6,10 +6,14 @@ import {
   ArrowLeftRight,
   ArrowUpRight,
   Bell,
+  Bookmark,
   Coins,
   FileSignature,
+  Flame,
   MapPin,
   ShieldCheck,
+  Sparkles,
+  Timer,
   TrendingUp,
   X,
 } from "lucide-react";
@@ -27,14 +31,34 @@ const ICONS = {
   terminate: ArrowUpRight,
 } as const;
 
-/** Объекты в шапке: сначала те, где есть договор. */
-function heroObjects(ids: string[]) {
-  /* В портфеле может быть несколько договоров по одному объекту — карточка
-     должна быть одна, иначе в списке появятся дубли ключей. */
-  const uniq = [...new Set(ids)];
-  const mine = uniq.map((id) => assets.find((a) => a.id === id)).filter(Boolean);
-  const rest = assets.filter((a) => !uniq.includes(a.id));
-  return [...mine, ...rest].slice(0, 6) as typeof assets;
+/** Бейджи-метки карточек: финальная стадия, популярность, выбор инвесторов. */
+type Mark = "final" | "popular" | "choice" | "mine";
+
+const MARKS = {
+  final: { icon: Timer, label: "markFinal" },
+  popular: { icon: Flame, label: "markPopular" },
+  choice: { icon: Sparkles, label: "markChoice" },
+  mine: { icon: Bookmark, label: "markMine" },
+} as const;
+
+/** Метка объекта: закрытая подписка → популярность → выбор инвесторов → свой объект. */
+function markOf(a: Obj, mine: Set<string>, top: string[]): Mark | null {
+  if (a.raised / a.target >= 0.95) return "final";
+  if (a.id === top[0]) return "popular";
+  if (a.id === top[1]) return "choice";
+  if (mine.has(a.id)) return "mine";
+  return null;
+}
+
+/**
+ * Порядок карточек в шапке: сначала помеченные (метка задаёт повод), внутри
+ * группы — по объёму привлечённых средств. В портфеле может быть несколько
+ * договоров по одному объекту, поэтому список объектов собираем не из договоров.
+ */
+function rankOf(m: Mark | null) {
+  if (m === "final" || m === "popular") return 3;
+  if (m === "choice" || m === "mine") return 2;
+  return 1;
 }
 
 /**
@@ -43,11 +67,13 @@ function heroObjects(ids: string[]) {
  */
 function ObjectExpanded({
   a,
+  mark,
   onClose,
   onOpen,
   onBuy,
 }: {
   a: Obj;
+  mark: Mark | null;
   onClose: () => void;
   onOpen: () => void;
   onBuy: () => void;
@@ -56,6 +82,7 @@ function ObjectExpanded({
   const { lang, contracts } = useApp();
   const mine = contracts.filter((c) => c.assetId === a.id);
   const val = mine.reduce((s, c) => s + contractValue(c), 0);
+  const MarkIcon = mark ? MARKS[mark].icon : null;
 
   return (
     <div className="expand">
@@ -86,7 +113,15 @@ function ObjectExpanded({
           transition={{ delay: 0.1, duration: 0.24 }}
         >
           <div className="expand__top">
-            <span className="expand__tag">{a.kind[lang]}</span>
+            <div className="expand__tags">
+              {mark && MarkIcon && (
+                <span className="mark" data-kind={mark}>
+                  <MarkIcon size={11} strokeWidth={2.6} />
+                  {t(ui[MARKS[mark].label])}
+                </span>
+              )}
+              <span className="expand__tag">{a.kind[lang]}</span>
+            </div>
             <button className="expand__x" onClick={onClose} type="button" aria-label={t(ui.close)}>
               <X size={16} strokeWidth={2.4} />
             </button>
@@ -179,8 +214,16 @@ export function Home({
   const total = body + acc;
   const diffPct = body ? (acc / body) * 100 : 0;
   const events = feed(contracts, now);
-  const all = heroObjects(contracts.map((c) => c.assetId));
-  const opened = open ? all.find((a) => a.id === open) : null;
+
+  const mineIds = new Set(contracts.map((c) => c.assetId));
+  const top = [...assets].sort((x, y) => y.raised - x.raised).map((x) => x.id);
+  const mark = (a: Obj) => markOf(a, mineIds, top);
+
+  /* Помеченные объекты идут вперёд: метка — повод открыть карточку. */
+  const all = [...assets]
+    .sort((x, y) => rankOf(mark(y)) - rankOf(mark(x)) || y.raised - x.raised)
+    .slice(0, 6);
+  const opened = open ? assets.find((a) => a.id === open) : null;
   const cards = all.filter((a) => a.id !== open);
 
   return (
@@ -224,32 +267,48 @@ export function Home({
                 </>
               )}
             </span>
-            <Pill icon={user ? ArrowUpRight : ShieldCheck}>
-              {user ? `${pct(diffPct)} ${t(ui.allTime)}` : `${t(ui.license)} № 88`}
-            </Pill>
+            {user ? (
+              <span className="delta">
+                <ArrowUpRight size={15} strokeWidth={2.4} />
+                {pct(diffPct)} {t(ui.allTime)}
+              </span>
+            ) : (
+              <Pill icon={ShieldCheck}>{`${t(ui.license)} № 88`}</Pill>
+            )}
           </motion.div>
 
           <div className="cards" role="list">
-            {cards.map((a, i) => (
-              <motion.button
-                key={a.id}
-                className="ocard"
-                type="button"
-                role="listitem"
-                layoutId={`obj-${a.id}`}
-                onClick={() => setOpen(a.id)}
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45, delay: 0.05 + i * 0.04, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <img src={`${import.meta.env.BASE_URL}obj/${a.img}`} alt="" loading="lazy" />
-                <span className="ocard__shade" aria-hidden />
-                <span className="ocard__t">{a.name[lang]}</span>
-                <span className="ocard__m tnum">
-                  <b>{a.rate}%</b> {t(ui.perYear)} · {a.term[lang]}
-                </span>
-              </motion.button>
-            ))}
+            {cards.map((a, i) => {
+              const m = mark(a);
+              const MarkIcon = m ? MARKS[m].icon : null;
+              return (
+                <motion.button
+                  key={a.id}
+                  className="ocard"
+                  type="button"
+                  role="listitem"
+                  data-mark={!!m}
+                  layoutId={`obj-${a.id}`}
+                  onClick={() => setOpen(a.id)}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: 0.05 + i * 0.04, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <img src={`${import.meta.env.BASE_URL}obj/${a.img}`} alt="" loading="lazy" />
+                  <span className="ocard__shade" aria-hidden />
+                  {m && MarkIcon && (
+                    <span className="mark ocard__badge" data-kind={m}>
+                      <MarkIcon size={11} strokeWidth={2.6} />
+                      {t(ui[MARKS[m].label])}
+                    </span>
+                  )}
+                  <span className="ocard__t">{a.name[lang]}</span>
+                  <span className="ocard__m tnum">
+                    <b>{a.rate}%</b> {t(ui.perYear)} · {a.term[lang]}
+                  </span>
+                </motion.button>
+              );
+            })}
           </div>
 
           <div className="actions">
@@ -368,6 +427,7 @@ export function Home({
             <ObjectExpanded
               key={opened.id}
               a={opened}
+              mark={mark(opened)}
               onClose={() => setOpen(null)}
               onOpen={() => {
                 setOpen(null);

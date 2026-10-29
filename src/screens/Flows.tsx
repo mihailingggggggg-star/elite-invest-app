@@ -632,12 +632,15 @@ export function DemoStub({ onClose }: { onClose: () => void }) {
 export function NewsSheet({ onClose }: { onClose: () => void }) {
   const t = useT();
   const { lang } = useApp();
+  /* На телефоне карточка свёрнута до трёх строк: заголовок + начало статьи,
+     остальное по тапу. Иначе один материал занимает весь экран. */
+  const [full, setFull] = useState<number | null>(null);
   return (
     <Sheet onClose={onClose}>
       <h3 className="sheet__t">{t(ui.newsTitle)}</h3>
       <div className="news">
         {news.map((n, i) => (
-          <div className="glass ncard" style={{ borderRadius: 20 }} key={i}>
+          <div className="glass ncard" style={{ borderRadius: 20 }} key={i} data-full={full === i}>
             <div className="ncard__img">
               <img src={`${import.meta.env.BASE_URL}obj/${n.img}`} alt="" loading="lazy" />
             </div>
@@ -652,9 +655,18 @@ export function NewsSheet({ onClose }: { onClose: () => void }) {
               </div>
               <h4>{n.title[lang]}</h4>
               <p>{n.text[lang]}</p>
-              <a href={n.url} target="_blank" rel="noreferrer">
-                {t(ui.readSource)} <IcOut />
-              </a>
+              <div className="ncard__acts">
+                <button
+                  className="ncard__more"
+                  type="button"
+                  onClick={() => setFull(full === i ? null : i)}
+                >
+                  {full === i ? t(ui.collapse) : t(ui.readMore)}
+                </button>
+                <a href={n.url} target="_blank" rel="noreferrer">
+                  {t(ui.readSourceShort)} <IcOut />
+                </a>
+              </div>
             </div>
           </div>
         ))}
