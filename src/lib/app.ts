@@ -114,6 +114,10 @@ export const contractValue = (c: Contract, now = new Date()) => c.amount + accru
 const termYears = (c: Contract) => c.months / 12;
 
 /** «1 договор», «2 договора», «5 договоров» / «2 келишим». */
+/** Только слово без числа: «договор / договора / договоров» — для подписи метрики. */
+export const contractsUnit = (n: number, lang: "ru" | "ky") =>
+  contractsWord(n, lang).split(" ").slice(1).join(" ");
+
 export const contractsWord = (n: number, lang: "ru" | "ky") => {
   if (lang === "ky") return `${n} келишим`;
   const mod10 = n % 10;

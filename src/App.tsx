@@ -196,7 +196,16 @@ function Shell() {
               <Stats onKyc={() => setKyc(true)} onBack={() => setTab("home")} />
             </Suspense>
           )}
-          {tab === "profile" && <Profile onKyc={() => setKyc(true)} onDemo={() => setStub(true)} />}
+          {tab === "profile" && (
+            <Profile
+              onKyc={() => setKyc(true)}
+              onDemo={() => setStub(true)}
+              onTopUp={() => gate(() => setTopUp(true))}
+              onFeed={() => setFeedOpen(true)}
+              onBrowse={() => setTab("market")}
+              onBack={() => setTab("home")}
+            />
+          )}
         </motion.div>
       </AnimatePresence>
 
