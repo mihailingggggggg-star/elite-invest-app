@@ -15,7 +15,16 @@ import {
 import { Sheet } from "../components/Sheet";
 import { PushConfirm } from "../components/Push";
 import { Seg } from "../components/Seg";
+import { TxRow } from "../components/kit";
+import { eventDate, feed } from "../lib/feed";
 import { MarkEsmar } from "../components/Logo";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Coins,
+  FileSignature,
+  TrendingUp,
+} from "lucide-react";
 import {
   IcBell,
   IcCheck,
@@ -546,6 +555,51 @@ function Success({ title, text, onClose }: { title: string; text: string; onClos
         {t(ui.done)}
       </button>
     </div>
+  );
+}
+
+const TX_ICON = {
+  sign: FileSignature,
+  accrual: TrendingUp,
+  payout: Coins,
+  topup: ArrowDownLeft,
+  terminate: ArrowUpRight,
+} as const;
+
+/** История операций: подписания, начисления, выплаты. */
+export function FeedSheet({ onClose }: { onClose: () => void }) {
+  const t = useT();
+  const { lang, contracts } = useApp();
+  const events = feed(contracts);
+
+  return (
+    <Sheet onClose={onClose}>
+      <h3 className="sheet__t">{t(ui.history)}</h3>
+
+      <div className="txs" style={{ marginBottom: 16 }}>
+        {events.map((e) => (
+          <TxRow
+            key={e.id}
+            icon={TX_ICON[e.kind]}
+            title={e.title[lang]}
+            sub={`${e.sub[lang]} · ${eventDate(e.date, lang)}`}
+            amount={`${e.amount > 0 ? "+" : "−"}${money(Math.abs(e.amount))}`}
+            tone={e.amount > 0 ? "up" : undefined}
+          />
+        ))}
+
+        {events.length === 0 && (
+          <div className="empty">
+            <b>{t(ui.noContractsYet)}</b>
+            <span>{t(ui.noContractsHint)}</span>
+          </div>
+        )}
+      </div>
+
+      <button className="btn btn--s" onClick={onClose}>
+        {t(ui.done)}
+      </button>
+    </Sheet>
   );
 }
 

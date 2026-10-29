@@ -2,18 +2,18 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } fro
 import { AnimatePresence, motion } from "framer-motion";
 import type { Contract, Lang } from "./lib/data";
 import { AppCtx, seedCash, seedContracts, useApp, type Theme, type User } from "./lib/app";
-import { TabBar, type Tab } from "./components/TabBar";
+import { Nav, type Tab } from "./components/Nav";
 import { Splash } from "./components/Splash";
 import { Home } from "./screens/Home";
 import { Market } from "./screens/Market";
-import { Stats } from "./screens/Stats";
 import { Profile } from "./screens/Profile";
 import { Asset } from "./screens/Asset";
-import { Deal, DemoStub, NewsSheet, Terminate, TopUp } from "./screens/Flows";
+import { Deal, DemoStub, FeedSheet, NewsSheet, Terminate, TopUp } from "./screens/Flows";
 
-/* Камера и загрузка файлов нужны только внутри проверки личности —
-   грузим этот чанк по требованию, чтобы сплэш и главная открывались быстрее. */
+/* Проверка личности и аналитика тянут камеру и графики — грузим по требованию,
+   чтобы первый экран открывался быстрее. */
 const Kyc = lazy(() => import("./components/Kyc").then((m) => ({ default: m.Kyc })));
+const Stats = lazy(() => import("./screens/Stats").then((m) => ({ default: m.Stats })));
 
 const LS = {
   lang: "esmar-lang",
@@ -62,7 +62,7 @@ export default function Root() {
     document.documentElement.dataset.theme = theme;
     document.documentElement.lang = lang;
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", theme === "light" ? "#f4f1ea" : "#101309");
+    if (meta) meta.setAttribute("content", theme === "light" ? "#fbf7ef" : "#0b0e06");
     write(LS.theme, theme);
     write(LS.lang, lang);
   }, [theme, lang]);
@@ -135,6 +135,7 @@ function Shell() {
   const [kyc, setKyc] = useState(false);
   const [newsAll, setNewsAll] = useState(false);
   const [stub, setStub] = useState(false);
+  const [feedOpen, setFeedOpen] = useState(false);
 
   /* Действие, отложенное до прохождения проверки личности. */
   const pending = useRef<null | (() => void)>(null);
@@ -162,38 +163,43 @@ function Shell() {
 
   return (
     <div className="app">
-      <div className="bgfx" aria-hidden>
-        <i />
-        <i />
-        <i />
+      <div className="bg" aria-hidden>
+        <span />
+        <span />
       </div>
 
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={tab}
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
           style={{ position: "absolute", inset: 0, zIndex: 1 }}
         >
           {tab === "home" && (
             <Home
               onAsset={setAsset}
               onStats={() => setTab("stats")}
-              onHistory={() => setStub(true)}
+              onAll={() => setFeedOpen(true)}
               onKyc={() => setKyc(true)}
               onBrowse={() => setTab("market")}
               onAllNews={() => setNewsAll(true)}
+              onTopUp={() => gate(() => setTopUp(true))}
+              onWithdraw={() => gate(() => setStub(true))}
             />
           )}
-          {tab === "market" && <Market onAsset={setAsset} />}
-          {tab === "stats" && <Stats onKyc={() => setKyc(true)} />}
+          {tab === "market" && <Market onAsset={setAsset} onBell={() => setFeedOpen(true)} />}
+          {tab === "stats" && (
+            <Suspense fallback={<div className="screen" />}>
+              <Stats onKyc={() => setKyc(true)} />
+            </Suspense>
+          )}
           {tab === "profile" && <Profile onKyc={() => setKyc(true)} onDemo={() => setStub(true)} />}
         </motion.div>
       </AnimatePresence>
 
-      <TabBar tab={tab} onTab={setTab} onAdd={() => gate(() => setTopUp(true))} />
+      <Nav tab={tab} onTab={setTab} onTopUp={() => gate(() => setTopUp(true))} />
 
       <AnimatePresence>
         {asset && (
@@ -217,6 +223,7 @@ function Shell() {
         {term && <Terminate key="term" assetId={term} onClose={() => setTerm(null)} />}
       </AnimatePresence>
       <AnimatePresence>{newsAll && <NewsSheet key="news" onClose={() => setNewsAll(false)} />}</AnimatePresence>
+      <AnimatePresence>{feedOpen && <FeedSheet key="feed" onClose={() => setFeedOpen(false)} />}</AnimatePresence>
       <AnimatePresence>{stub && <DemoStub key="stub" onClose={() => setStub(false)} />}</AnimatePresence>
       <AnimatePresence>
         {kyc && (

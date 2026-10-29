@@ -11,12 +11,15 @@
     "deploy": "npm run build && bash scripts/deploy.sh"
   },
   "dependencies": {
+    "@nivo/circle-packing": "^0.99.0",
     "framer-motion": "^13.4.0",
     "ldrs": "^1.1.9",
+    "lucide-react": "^1.63.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-dropzone": "^20.1.4",
-    "react-webcam": "^7.2.0"
+    "react-webcam": "^7.2.0",
+    "recharts": "^3.10.1"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

@@ -1,8 +1,9 @@
 import { COMPANY, ui } from "../lib/data";
 import { accrued, money, useApp, useT } from "../lib/app";
 import { Glass } from "../components/Glass";
-import { LogoEsmar } from "../components/Logo";
 import { Seg } from "../components/Seg";
+import { Settings2 } from "lucide-react";
+import { RoundBtn } from "../components/kit";
 import {
   IcArrow,
   IcChat,
@@ -34,15 +35,10 @@ export function Profile({ onKyc, onDemo }: { onKyc: () => void; onDemo: () => vo
 
   return (
     <div className="screen">
-      <div className="top">
-        <span className="top__logo">
-          <LogoEsmar width={104} />
-        </span>
-        <span className="sp" />
-        <Glass className="chip-badge" radius={999} refractionHeight={5} refractionAmount={22} blur={10}>
-          Демо
-        </Glass>
-      </div>
+      <header className="hdr hdr--plain">
+        <span className="hdr__title">{t(ui.tabProfile)}</span>
+        <RoundBtn icon={Settings2} onClick={onDemo} label={t(ui.settings)} />
+      </header>
 
       <div className="pad" style={{ marginTop: 6 }}>
         {user ? (

@@ -1,250 +1,253 @@
 import { motion } from "framer-motion";
+import {
+  ArrowDownLeft,
+  ArrowLeftRight,
+  ArrowUpRight,
+  Bell,
+  Coins,
+  FileSignature,
+  ShieldCheck,
+  TrendingUp,
+} from "lucide-react";
 import { assetById, news, products, ui } from "../lib/data";
 import { accrued, contractValue, contractsWord, money, pct, shortDate, useApp, useT, maturity } from "../lib/app";
+import { eventDate, feed, type Event } from "../lib/feed";
+import { AccountCard, ActionChip, Pill, RoundBtn, SectionHead, TxRow } from "../components/kit";
 import { Glass } from "../components/Glass";
-import { IcClock, IcPie, IcOut, IcShield, IcArrow } from "../components/Icons";
-import { Brand } from "../components/Brand";
+
+const ICONS = {
+  sign: FileSignature,
+  accrual: TrendingUp,
+  payout: Coins,
+  topup: ArrowDownLeft,
+  terminate: ArrowUpRight,
+} as const;
+
+/** Последние 4 цифры номера личного счёта — стабильны для пользователя. */
+const accountTail = (seed: string) => {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) % 9000;
+  return String(1000 + h).slice(-4);
+};
 
 export function Home({
   onAsset,
   onStats,
-  onHistory,
+  onAll,
   onKyc,
   onBrowse,
   onAllNews,
+  onTopUp,
+  onWithdraw,
 }: {
   onAsset: (id: string) => void;
   onStats: () => void;
-  onHistory: () => void;
+  onAll: () => void;
   onKyc: () => void;
   onBrowse: () => void;
   onAllNews: () => void;
+  onTopUp: () => void;
+  onWithdraw: () => void;
 }) {
   const t = useT();
-  const { lang, user, contracts, cash } = useApp();
+  const { lang, user, contracts } = useApp();
   const now = new Date();
 
   const body = contracts.reduce((s, c) => s + c.amount, 0);
   const acc = contracts.reduce((s, c) => s + accrued(c, now), 0);
   const total = body + acc;
   const diffPct = body ? (acc / body) * 100 : 0;
+  const events = feed(contracts, now);
 
   return (
-    <div className="screen">
-      <Brand />
-      <h1 className="h-screen">{t(ui.tabHome)}</h1>
-
-      <div className="pad stack">
+    <div className="screen screen--home">
+      <header className="hdr">
         {user ? (
-          <>
-            <motion.div
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <Glass className="pf" radius={26}>
-                <div className="pf__k">{t(ui.portfolio)}</div>
-                <div className="pf__v tnum">
-                  {money(Math.round(total))} <small>USD</small>
-                </div>
-                {body > 0 && (
-                  <div className="pf__d">
-                    <span className="up">
-                      +{money(Math.round(acc))} ({pct(diffPct)})
-                    </span>
-                    <em>{t(ui.allTime)}</em>
-                  </div>
-                )}
-              </Glass>
-            </motion.div>
-
-            <div className="quick">
-              <Glass className="tap" radius={20} style={{ padding: 0 }}>
-                <button
-                  onClick={onHistory}
-                  style={{ display: "flex", width: "100%", alignItems: "center", gap: 10, padding: "14px 16px", fontWeight: 700, fontSize: 14 }}
-                >
-                  <span className="quick__i"><IcClock /></span>
-                  {t(ui.history)}
-                </button>
-              </Glass>
-              <Glass className="tap" radius={20} style={{ padding: 0 }}>
-                <button
-                  onClick={onStats}
-                  style={{ display: "flex", width: "100%", alignItems: "center", gap: 10, padding: "14px 16px", fontWeight: 700, fontSize: 14 }}
-                >
-                  <span className="quick__i"><IcPie /></span>
-                  {t(ui.analytics)}
-                </button>
-              </Glass>
-            </div>
-
-            <Glass className="pf" radius={22} style={{ padding: "16px 18px" }}>
-              <div className="pf__k">{t(ui.personal)}</div>
-              <div className="tnum" style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.03em", marginTop: 2 }}>
-                {money(cash)}
-              </div>
-            </Glass>
-          </>
+          <span className="hdr__ava" aria-hidden>
+            {user.name
+              .split(" ")
+              .filter(Boolean)
+              .map((w) => w[0])
+              .join("")
+              .slice(0, 2)
+              .toUpperCase()}
+          </span>
         ) : (
-          <GuestHero onKyc={onKyc} onBrowse={onBrowse} />
+          <span className="hdr__ava hdr__ava--ghost" aria-hidden>
+            <ShieldCheck size={17} strokeWidth={2} />
+          </span>
         )}
-      </div>
+        <RoundBtn icon={Bell} onClick={onAll} label={t(ui.history)} />
+      </header>
 
       {user ? (
         <>
-          <h2 className="h-sec">
-            {t(ui.myContracts)}
-            <span>{contractsWord(contracts.length, lang)}</span>
-          </h2>
-          <div className="pad rows">
-            {contracts.length === 0 && (
-              <Glass className="kpi" radius={20}>
+          <motion.div
+            className="balance"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <span className="balance__k">{t(ui.portfolio)}</span>
+            <span className="balance__v tnum">{money(total, 2)}</span>
+            {body > 0 && (
+              <Pill icon={ArrowUpRight}>
+                {pct(diffPct)} {t(ui.allTime)}
+              </Pill>
+            )}
+          </motion.div>
+
+          <AccountCard
+            holder={t(ui.personal)}
+            brand="ESMAR"
+            number={accountTail(user.email)}
+            exp={`12/${String(now.getFullYear() + 3).slice(2)}`}
+          />
+
+          <div className="actions">
+            <ActionChip icon={ArrowUpRight} label={t(ui.topUp)} onClick={onTopUp} />
+            <ActionChip icon={ArrowLeftRight} label={t(ui.buy)} onClick={onBrowse} />
+            <ActionChip icon={ArrowDownLeft} label={t(ui.withdraw)} onClick={onWithdraw} />
+          </div>
+
+          <SectionHead title={t(ui.recent)} action={t(ui.all)} onAction={onAll} />
+
+          <div className="txs">
+            {events.slice(0, 3).map((e: Event) => (
+              <TxRow
+                key={e.id}
+                icon={ICONS[e.kind]}
+                title={e.title[lang]}
+                sub={`${e.sub[lang]} · ${eventDate(e.date, lang)}`}
+                amount={`${e.amount > 0 ? "+" : "−"}${money(Math.abs(e.amount))}`}
+                tone={e.amount > 0 ? "up" : undefined}
+                onClick={() => onAsset(contracts.find((c) => e.id.endsWith(c.no))?.assetId ?? contracts[0]?.assetId ?? "")}
+              />
+            ))}
+            {events.length === 0 && (
+              <div className="empty">
                 <b>{t(ui.noContractsYet)}</b>
-                <span style={{ fontSize: 14, fontWeight: 600, color: "var(--txt-2)", letterSpacing: 0 }}>
-                  {t(ui.noContractsHint)}
-                </span>
-                <button className="btn btn--s btn--sm" style={{ marginTop: 12 }} onClick={onBrowse}>
+                <span>{t(ui.noContractsHint)}</span>
+                <button className="btn btn--p btn--sm" onClick={onBrowse}>
                   {t(ui.guestBrowse)}
                 </button>
-              </Glass>
+              </div>
             )}
-            {contracts.map((c, i) => {
+          </div>
+
+          <SectionHead title={t(ui.myContracts)} action={contractsWord(contracts.length, lang)} />
+
+          <div className="rows">
+            {contracts.slice(0, 4).map((c, i) => {
               const a = assetById(c.assetId);
               const val = contractValue(c, now);
               const d = ((val - c.amount) / c.amount) * 100;
               return (
-                <motion.div
+                <motion.button
                   key={c.no}
-                  initial={{ opacity: 0, y: 14 }}
+                  className="hold"
+                  onClick={() => onAsset(a.id)}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.45, delay: 0.05 + i * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.4, delay: 0.04 * i, ease: [0.22, 1, 0.36, 1] }}
+                  type="button"
                 >
-                  <Glass className="row tap" radius={20} as="div" onClick={() => onAsset(a.id)}>
-                    <img className="row__img" src={`${import.meta.env.BASE_URL}obj/${a.img}`} alt="" />
-                    <span>
-                      <span className="row__n">{a.name[lang]}</span>
-                      <span className="row__s">
-                        {products[c.product].name[lang]} · {c.rate}% · {lang === "ky" ? "мөөнөтү" : "до"}{" "}
-                        {shortDate(maturity(c).toISOString())}
-                      </span>
+                  <img className="hold__img" src={`${import.meta.env.BASE_URL}obj/${a.img}`} alt="" />
+                  <span className="hold__b">
+                    <span className="hold__n">{a.name[lang]}</span>
+                    <span className="hold__s">
+                      {products[c.product].name[lang]} · {c.rate}% · {shortDate(maturity(c).toISOString())}
                     </span>
-                    <span className="row__r">
-                      <span className="row__p tnum">{money(Math.round(val))}</span>
-                      <span className="row__c tnum up">{pct(d)}</span>
-                    </span>
-                  </Glass>
-                </motion.div>
+                  </span>
+                  <span className="hold__r">
+                    <b className="tnum">{money(Math.round(val))}</b>
+                    <i className={`tnum ${d < 0 ? "down" : "up"}`}>{pct(d)}</i>
+                  </span>
+                </motion.button>
               );
             })}
           </div>
+
+          <button className="linkall" onClick={onStats} type="button">
+            {t(ui.analytics)}
+          </button>
         </>
       ) : (
         <>
-          <h2 className="h-sec">
-            {t(ui.tabMarket)}
-            <button className="hsec__more" onClick={onBrowse}>
-              {t(ui.all)} <IcArrow size={13} />
-            </button>
-          </h2>
-          <div className="pad stack">
+          <motion.div
+            className="balance"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <span className="balance__k">{t(ui.guestTitle)}</span>
+            <span className="balance__v tnum">
+              до 55<small>%</small>
+            </span>
+            <Pill icon={ShieldCheck}>
+              {t(ui.license)} № 88 · {lang === "ky" ? "нотариалдык күбөлөндүрүү" : "нотариальное заверение"}
+            </Pill>
+          </motion.div>
+
+          <Glass className="guestcard" radius={26}>
+            <p>{t(ui.guestText)}</p>
+            <div className="guestcard__b">
+              <button className="btn btn--p" onClick={onKyc}>
+                {t(ui.guestCta)}
+              </button>
+              <button className="btn btn--s" onClick={onBrowse}>
+                {t(ui.guestBrowse)}
+              </button>
+            </div>
+          </Glass>
+
+          <SectionHead title={t(ui.tabMarket)} action={t(ui.all)} onAction={onBrowse} />
+          <div className="rows">
             {Object.values(products).map((p) => (
-              <Glass className="mcard tap" radius={22} key={p.id} as="div" onClick={onBrowse}>
-                <div className="mcard__b mcard__b--tight">
-                  <div className="mcard__t">
-                    <div>
-                      <div className="mcard__n">{p.name[lang]}</div>
-                      <div className="mcard__meta">
-                        {t(ui.term)}: {p.term[lang]} · {t(ui.payout)}: {p.payout[lang]}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div className="mcard__p tnum brand">
-                        {p.upTo ? "до " : ""}
-                        {p.rate}%
-                      </div>
-                      <div className="mcard__meta">{t(ui.perYear)}</div>
-                    </div>
-                  </div>
-                </div>
-              </Glass>
+              <button className="hold" key={p.id} onClick={onBrowse} type="button">
+                <span className="hold__ico">
+                  <TrendingUp size={17} strokeWidth={2} />
+                </span>
+                <span className="hold__b">
+                  <span className="hold__n">{p.name[lang]}</span>
+                  <span className="hold__s">
+                    {t(ui.term)}: {p.term[lang]} · {p.payout[lang]}
+                  </span>
+                </span>
+                <span className="hold__r">
+                  <b className="tnum brand">
+                    {p.upTo ? "до " : ""}
+                    {p.rate}%
+                  </b>
+                  <i>{t(ui.perYear)}</i>
+                </span>
+              </button>
             ))}
           </div>
         </>
       )}
 
-      <h2 className="h-sec">
-        {t(ui.newsTitle)}
-        <button className="hsec__more" onClick={onAllNews}>
-          {t(ui.allNews)} <IcArrow size={13} />
-        </button>
-      </h2>
-      <div className="pad news">
-        {news.slice(0, 3).map((n, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.05 + i * 0.05, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <Glass className="ncard" radius={20}>
-              <div className="ncard__img">
-                <img src={`${import.meta.env.BASE_URL}obj/${n.img}`} alt="" loading="lazy" />
+      <SectionHead title={t(ui.newsTitle)} action={t(ui.allNews)} onAction={onAllNews} />
+      <div className="news">
+        {news.slice(0, 2).map((n, i) => (
+          <Glass className="ncard" radius={24} key={i}>
+            <div className="ncard__img">
+              <img src={`${import.meta.env.BASE_URL}obj/${n.img}`} alt="" loading="lazy" />
+            </div>
+            <div className="ncard__b">
+              <div className="ncard__h">
+                <span className="ncard__tag" data-about={n.about}>
+                  {n.tag[lang]}
+                </span>
+                <span>{n.date}</span>
               </div>
-              <div className="ncard__b">
-                <div className="ncard__h">
-                  <span className="ncard__tag" data-about={n.about}>
-                    {n.tag[lang]}
-                  </span>
-                  <span>{n.date}</span>
-                  <span>· {n.source}</span>
-                </div>
-                <h4>{n.title[lang]}</h4>
-                <p>{n.text[lang]}</p>
-                <a href={n.url} target="_blank" rel="noreferrer">
-                  {t(ui.readSource)} <IcOut />
-                </a>
-              </div>
-            </Glass>
-          </motion.div>
+              <h4>{n.title[lang]}</h4>
+            </div>
+          </Glass>
         ))}
       </div>
 
-      <div className="demo">{t(ui.demoNames)}</div>
+      <p className="disclaimer">{t(ui.demoNames)}</p>
     </div>
-  );
-}
-
-/** Экран для неавторизованной зоны: ставка, лицензия и вход в проверку. */
-function GuestHero({ onKyc, onBrowse }: { onKyc: () => void; onBrowse: () => void }) {
-  const t = useT();
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <Glass className="hero" radius={26} refractionHeight={10} refractionAmount={44}>
-        <div className="hero__k">{t(ui.guestTitle)}</div>
-        <div className="hero__rate tnum">
-          до 55% <small>{t(ui.perYear)}</small>
-        </div>
-        <p className="hero__t">{t(ui.guestText)}</p>
-
-        <div className="hero__lic">
-          <IcShield size={15} />
-          {t(ui.licenseFull)} · {t(ui.license)} № 88
-        </div>
-
-        <div className="hero__b">
-          <button className="btn btn--p" onClick={onKyc}>
-            {t(ui.guestCta)}
-          </button>
-          <button className="btn btn--s" onClick={onBrowse}>
-            {t(ui.guestBrowse)}
-          </button>
-        </div>
-      </Glass>
-    </motion.div>
   );
 }

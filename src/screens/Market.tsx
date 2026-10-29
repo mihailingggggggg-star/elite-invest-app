@@ -4,11 +4,12 @@ import { assets, products, ui, type Asset, type ProductId } from "../lib/data";
 import { money, useApp, useT } from "../lib/app";
 import { Glass } from "../components/Glass";
 import { IcArrow, IcPin, IcSearch, IcClock } from "../components/Icons";
-import { Brand } from "../components/Brand";
+import { Bell } from "lucide-react";
+import { RoundBtn } from "../components/kit";
 
 type Filter = "all" | ProductId;
 
-export function Market({ onAsset }: { onAsset: (id: string) => void }) {
+export function Market({ onAsset, onBell }: { onAsset: (id: string) => void; onBell: () => void }) {
   const t = useT();
   const { lang } = useApp();
   const [mode, setMode] = useState<Filter>("all");
@@ -37,8 +38,10 @@ export function Market({ onAsset }: { onAsset: (id: string) => void }) {
 
   return (
     <div className="screen">
-      <Brand />
-      <h1 className="h-screen">{t(ui.tabMarket)}</h1>
+      <header className="hdr hdr--plain">
+        <span className="hdr__title">{t(ui.tabMarket)}</span>
+        <RoundBtn icon={Bell} onClick={onBell} label={t(ui.history)} />
+      </header>
 
       <Glass className="search" radius={20}>
         <IcSearch />
