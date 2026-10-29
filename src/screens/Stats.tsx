@@ -80,7 +80,7 @@ export function Stats({ onKyc }: { onKyc: () => void }) {
         <RoundBtn icon={CalendarDays} onClick={() => {}} label={t(ui.months12)} />
       </header>
 
-      <Glass className="statcard" radius={28}>
+      <div className="gradcard statcard">
         <div className="statcard__h">
           <Pill icon={ArrowUpRight}>
             {pct((acc / (body || 1)) * 100)} {t(ui.allTime)}
@@ -88,7 +88,7 @@ export function Stats({ onKyc }: { onKyc: () => void }) {
         </div>
         <span className="statcard__v tnum">{money(total, 2)}</span>
         <AccrualChart data={series} />
-      </Glass>
+      </div>
 
       <div className="tiles">
         <Tile k={t(ui.statProfit)} v={`+${money(Math.round(acc))}`} tone="up" />
@@ -97,9 +97,9 @@ export function Stats({ onKyc }: { onKyc: () => void }) {
       </div>
 
       <SectionHead title={t(ui.byObject)} />
-      <Glass className="bubcard" radius={28}>
+      <div className="gradcard bubcard">
         <ShareBubbles data={byObject} />
-      </Glass>
+      </div>
 
       <Glass className="cardlist" radius={26}>
         <div className="cardlist__h">

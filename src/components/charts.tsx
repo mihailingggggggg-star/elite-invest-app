@@ -9,8 +9,9 @@ export type Point = { label: string; value: number };
 
 /** Кривая начислений — карточка со спарклайном в референсе. */
 export function AccrualChart({ data, height = 132 }: { data: Point[]; height?: number }) {
-  const { lang, theme } = useApp();
-  const line = theme === "light" ? "#232b1d" : "#ffffff";
+  const { lang } = useApp();
+  /* карточка всегда градиентная — линия и подписи всегда светлые */
+  const line = "#ffffff";
   const last = data[data.length - 1];
   const peak = data.reduce((a, b) => (b.value > a.value ? b : a), data[0]);
 
@@ -60,7 +61,7 @@ export function AccrualChart({ data, height = 132 }: { data: Point[]; height?: n
             strokeLinecap="round"
             fill="url(#areaFill)"
             dot={false}
-            activeDot={{ r: 4, fill: line, stroke: theme === "light" ? "rgba(35,43,29,.25)" : "rgba(255,255,255,.45)", strokeWidth: 4 }}
+            activeDot={{ r: 4, fill: line, stroke: "rgba(255,255,255,.45)", strokeWidth: 4 }}
             isAnimationActive
             animationDuration={900}
           />
@@ -71,7 +72,7 @@ export function AccrualChart({ data, height = 132 }: { data: Point[]; height?: n
               y={peak.value}
               r={3.5}
               fill={line}
-              stroke={theme === "light" ? "rgba(35,43,29,.22)" : "rgba(255,255,255,.35)"}
+              stroke="rgba(255,255,255,.35)"
               strokeWidth={4}
             />
           )}
@@ -83,14 +84,23 @@ export function AccrualChart({ data, height = 132 }: { data: Point[]; height?: n
 
 export type Bubble = { name: string; value: number };
 
-const PALETTE_DARK = ["#F2E4CD", "#DFC094", "#C99A5C", "#AD7C43", "#84603a", "#5f4629"];
-const PALETTE_LIGHT = ["#2A3322", "#4C5E3A", "#7A8A5A", "#A9793F", "#C99A5C", "#DFC094"];
+/* пузыри живут на градиентной карточке — полупрозрачные светлые круги */
+const PALETTE = [
+  "rgba(255,255,255,0.92)",
+  "rgba(255,255,255,0.62)",
+  "rgba(255,255,255,0.42)",
+  "rgba(255,255,255,0.28)",
+  "rgba(255,255,255,0.2)",
+  "rgba(255,255,255,0.14)",
+];
 
 /** Пузырьковая диаграмма долей — карточка справа снизу в референсе. */
 export function ShareBubbles({ data, height = 250 }: { data: Bubble[]; height?: number }) {
-  const { theme } = useApp();
-  const PALETTE = theme === "light" ? PALETTE_LIGHT : PALETTE_DARK;
-  const label = theme === "light" ? "#FBF7EF" : "#241A0C";
+  /* на светлых пузырях подпись тёмная, на прозрачных — белая */
+  const labelFor = (id: unknown) => {
+    const i = data.findIndex((d) => d.name === id);
+    return i >= 0 && i < 2 ? "#2A1F10" : "#FFFFFF";
+  };
   const total = data.reduce((s, d) => s + d.value, 0) || 1;
   const colorOf = (name: string) => {
     const i = data.findIndex((d) => d.name === name);
@@ -109,7 +119,7 @@ export function ShareBubbles({ data, height = 250 }: { data: Bubble[]; height?: 
           padding={7}
           borderWidth={0}
           labelsSkipRadius={34}
-          labelTextColor={label}
+          labelTextColor={(node) => labelFor(node.id)}
           enableLabels
           animate
           motionConfig="gentle"

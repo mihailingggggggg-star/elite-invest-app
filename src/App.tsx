@@ -52,7 +52,7 @@ function write(key: string, value: unknown) {
 
 export default function Root() {
   const [lang, setLang] = useState<Lang>(() => read(LS.lang, ["ru", "ky"], "ru") as Lang);
-  const [theme, setTheme] = useState<Theme>(() => read(LS.theme, ["light", "dark"], "dark") as Theme);
+  const [theme, setTheme] = useState<Theme>(() => read(LS.theme, ["light", "dark"], "light") as Theme);
   const [user, setUser] = useState<User | null>(() => readJson<User | null>(LS.user, null));
   const [contracts, setContracts] = useState<Contract[]>(() => readJson<Contract[]>(LS.contracts, []));
   const [cash, setCash] = useState<number>(() => readJson<number>(LS.cash, 0));
@@ -187,6 +187,7 @@ function Shell() {
               onAllNews={() => setNewsAll(true)}
               onTopUp={() => gate(() => setTopUp(true))}
               onWithdraw={() => gate(() => setStub(true))}
+              onBuy={(id) => gate(() => setDeal(id))}
             />
           )}
           {tab === "market" && <Market onAsset={setAsset} onBell={() => setFeedOpen(true)} />}
