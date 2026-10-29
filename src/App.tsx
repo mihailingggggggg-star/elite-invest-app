@@ -190,7 +190,7 @@ function Shell() {
               onBuy={(id) => gate(() => setDeal(id))}
             />
           )}
-          {tab === "market" && <Market onAsset={setAsset} onBell={() => setFeedOpen(true)} />}
+          {tab === "market" && <Market onAsset={setAsset} onProfile={() => setTab("profile")} />}
           {tab === "stats" && (
             <Suspense fallback={<div className="screen" />}>
               <Stats onKyc={() => setKyc(true)} />
