@@ -1,5 +1,5 @@
 {
-  "name": "elite-invest-app",
+  "name": "esmar-app",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,8 +12,11 @@
   },
   "dependencies": {
     "framer-motion": "^13.4.0",
+    "ldrs": "^1.1.9",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "react-dropzone": "^20.1.4",
+    "react-webcam": "^7.2.0"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

@@ -11,7 +11,7 @@ git config http.postBuffer 524288000
 git config http.version HTTP/1.1
 git checkout -qB gh-pages
 git add -A
-git -c user.email="deploy@eliteinvest" -c user.name="deploy" commit -q -m "Deploy $(date -u +%FT%TZ)"
+git -c user.email="deploy@esmar" -c user.name="esmar-deploy" commit -q -m "ESMAR deploy $(date -u +%FT%TZ)"
 git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" gh-pages:gh-pages
 rm -rf .git
 echo "https://mihailingggggggg-star.github.io/elite-invest-app/"

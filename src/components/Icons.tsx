@@ -40,6 +40,12 @@ export const IcBack = ({ size }: P) => (
   </svg>
 );
 
+export const IcClose = ({ size }: P) => (
+  <svg {...s(size ?? 18)} aria-hidden>
+    <path d="M6.5 6.5l11 11M17.5 6.5l-11 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
 export const IcArrow = ({ size }: P) => (
   <svg {...s(size ?? 16)} aria-hidden>
     <path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
@@ -115,5 +121,87 @@ export const IcGlobe = ({ size }: P) => (
   <svg {...s(size ?? 18)} aria-hidden>
     <circle cx="12" cy="12" r="8.4" stroke="currentColor" strokeWidth="1.7" />
     <path d="M3.6 12h16.8M12 3.6c2.1 2.3 3.2 5.2 3.2 8.4s-1.1 6.1-3.2 8.4c-2.1-2.3-3.2-5.2-3.2-8.4S9.9 5.9 12 3.6Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+  </svg>
+);
+
+/* --- добавлено под долевое управление ------------------------------- */
+
+export const IcBell = ({ size }: P) => (
+  <svg {...s(size ?? 18)} aria-hidden>
+    <path d="M6.6 9.6a5.4 5.4 0 0 1 10.8 0c0 4 1.6 5.2 1.6 5.2H5s1.6-1.2 1.6-5.2Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+    <path d="M10.2 18a2 2 0 0 0 3.6 0" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+  </svg>
+);
+
+export const IcSeal = ({ size }: P) => (
+  <svg {...s(size ?? 18)} aria-hidden>
+    <circle cx="12" cy="10" r="6" stroke="currentColor" strokeWidth="1.7" />
+    <path d="m9.6 10 1.8 1.8 3.2-3.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M8.8 15.4 7.6 21l4.4-2.2L16.4 21l-1.2-5.6" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+  </svg>
+);
+
+export const IcCamera = ({ size }: P) => (
+  <svg {...s(size ?? 18)} aria-hidden>
+    <path d="M4 8.6h3l1.3-2h7.4l1.3 2h3V19H4V8.6Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+    <circle cx="12" cy="13.6" r="3.2" stroke="currentColor" strokeWidth="1.7" />
+  </svg>
+);
+
+export const IcUpload = ({ size }: P) => (
+  <svg {...s(size ?? 18)} aria-hidden>
+    <path d="M12 15.4V4.8M8 8.4 12 4.4l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M4.8 15.6V19a1 1 0 0 0 1 1h12.4a1 1 0 0 0 1-1v-3.4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+  </svg>
+);
+
+export const IcCard = ({ size }: P) => (
+  <svg {...s(size ?? 18)} aria-hidden>
+    <rect x="3.4" y="5.6" width="17.2" height="12.8" rx="2" stroke="currentColor" strokeWidth="1.7" />
+    <circle cx="8.6" cy="11.4" r="1.7" stroke="currentColor" strokeWidth="1.6" />
+    <path d="M5.6 15.6c.4-1.4 1.6-2.2 3-2.2s2.6.8 3 2.2M14.4 10.4h4M14.4 13.6h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+  </svg>
+);
+
+export const IcCalendar = ({ size }: P) => (
+  <svg {...s(size ?? 18)} aria-hidden>
+    <rect x="4" y="5.6" width="16" height="14" rx="2" stroke="currentColor" strokeWidth="1.7" />
+    <path d="M4 10h16M8.6 3.6v4M15.4 3.6v4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+  </svg>
+);
+
+export const IcPen = ({ size }: P) => (
+  <svg {...s(size ?? 18)} aria-hidden>
+    <path d="M4.6 19.4 5.4 15 15.8 4.6a1.6 1.6 0 0 1 2.3 0l1.3 1.3a1.6 1.6 0 0 1 0 2.3L9 18.6l-4.4.8Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+    <path d="m14.4 6 3.6 3.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+  </svg>
+);
+
+export const IcLock = ({ size }: P) => (
+  <svg {...s(size ?? 18)} aria-hidden>
+    <rect x="5.2" y="10.4" width="13.6" height="9.4" rx="2.2" stroke="currentColor" strokeWidth="1.7" />
+    <path d="M8.4 10.4V8.2a3.6 3.6 0 0 1 7.2 0v2.2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    <circle cx="12" cy="15" r="1.2" fill="currentColor" />
+  </svg>
+);
+
+export const IcRefresh = ({ size }: P) => (
+  <svg {...s(size ?? 18)} aria-hidden>
+    <path d="M19.2 12a7.2 7.2 0 1 1-2.1-5.1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    <path d="M19.6 4.8v4.4h-4.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+export const IcPin = ({ size }: P) => (
+  <svg {...s(size ?? 16)} aria-hidden>
+    <path d="M12 21c4-4.4 6-7.6 6-10a6 6 0 1 0-12 0c0 2.4 2 5.6 6 10Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+    <circle cx="12" cy="11" r="2.2" stroke="currentColor" strokeWidth="1.7" />
+  </svg>
+);
+
+export const IcLayers = ({ size }: P) => (
+  <svg {...s(size ?? 18)} aria-hidden>
+    <path d="m12 3.4 8.4 4.4-8.4 4.4L3.6 7.8 12 3.4Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+    <path d="m4 12.4 8 4.2 8-4.2M4 16.6l8 4.2 8-4.2" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
   </svg>
 );
