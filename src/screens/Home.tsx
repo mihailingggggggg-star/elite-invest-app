@@ -5,7 +5,6 @@ import {
   ArrowDownLeft,
   ArrowLeftRight,
   ArrowUpRight,
-  Bell,
   Bookmark,
   Coins,
   FileSignature,
@@ -20,8 +19,9 @@ import {
 import { assets, assetById, news, products, ui, type Asset as Obj } from "../lib/data";
 import { accrued, contractValue, contractsWord, money, pct, useApp, useT } from "../lib/app";
 import { eventDate, feed, type Event } from "../lib/feed";
-import { ActionChip, Pill, RoundBtn, SectionHead, TxRow } from "../components/kit";
+import { ActionChip, Pill, SectionHead, TxRow } from "../components/kit";
 import { HeroBg } from "../components/Hero";
+import { AccountIsland } from "../components/Island";
 
 const ICONS = {
   sign: FileSignature,
@@ -205,7 +205,7 @@ export function Home({
   onBuy: (id: string) => void;
 }) {
   const t = useT();
-  const { lang, user, contracts } = useApp();
+  const { lang, user, contracts, cash } = useApp();
   const [open, setOpen] = useState<string | null>(null);
   const now = new Date();
 
@@ -232,24 +232,13 @@ export function Home({
         <HeroBg />
 
         <div className="hero__in">
-          <header className="hdr">
-            {user ? (
-              <span className="hdr__ava" aria-hidden>
-                {user.name
-                  .split(" ")
-                  .filter(Boolean)
-                  .map((w) => w[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase()}
-              </span>
-            ) : (
-              <span className="hdr__ava hdr__ava--ghost" aria-hidden>
-                <ShieldCheck size={17} strokeWidth={2} />
-              </span>
-            )}
-            <RoundBtn icon={Bell} onClick={onAll} label={t(ui.history)} />
-          </header>
+          <AccountIsland
+            user={!!user}
+            cash={cash}
+            onTopUp={onTopUp}
+            onWithdraw={onWithdraw}
+            onKyc={onKyc}
+          />
 
           <motion.div
             className="balance"

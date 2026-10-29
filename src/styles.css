@@ -23,7 +23,7 @@
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
-  --nav-h: 62px;
+  --nav-h: 58px;
 }
 
 /* тёмная тема: тёмная панель, светлый текст */
@@ -51,7 +51,7 @@
 
   --sheet: #171c10;
   --veil: rgba(5, 7, 3, 0.7);
-  --nav: rgba(240, 236, 226, 0.1);
+  --nav: rgba(32, 37, 26, 0.9);
   --nav-line: rgba(255, 255, 255, 0.14);
   --nav-ico: rgba(255, 255, 255, 0.62);
   --shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.8);
@@ -82,7 +82,7 @@
 
   --sheet: #fffdf9;
   --veil: rgba(28, 22, 12, 0.38);
-  --nav: rgba(24, 27, 18, 0.92);
+  --nav: rgba(20, 23, 15, 0.97);
   --nav-line: rgba(255, 255, 255, 0.1);
   --nav-ico: rgba(255, 255, 255, 0.6);
   --shadow: 0 16px 34px -24px rgba(60, 46, 26, 0.4);
@@ -238,6 +238,77 @@ input { font: inherit; color: inherit; border: 0; background: none; outline: non
   transition: transform 0.25s var(--ease);
 }
 .roundbtn:active { transform: scale(0.94); }
+
+/* ------------------------------------------- динамический остров (счёт) --- */
+
+.island {
+  position: relative;
+  z-index: 3;
+  margin: calc(9px + var(--safe-t)) auto 2px;
+  padding: 0 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #f6f2e9;
+  background: #080907;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 36px -18px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.island:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.5); outline-offset: 3px; }
+
+.island__row {
+  flex: 0 0 38px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+}
+.island__mark { display: grid; place-items: center; color: #c99055; }
+.island__k {
+  overflow: hidden;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  color: rgba(246, 242, 233, 0.6);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.island__v { font-size: 13px; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; }
+.island__v[data-off="true"] { color: rgba(246, 242, 233, 0.4); }
+.island__acc { letter-spacing: 0.08em; }
+
+.island__more { display: grid; padding: 0 4px 14px; }
+.island__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  color: rgba(246, 242, 233, 0.42);
+}
+.island__head[data-solo="true"] { justify-content: flex-end; }
+.island__chev { display: grid; place-items: center; color: rgba(246, 242, 233, 0.5); padding: 2px; }
+.island__big { margin-top: 4px; font-size: 27px; font-weight: 700; letter-spacing: -0.035em; }
+.island__big--s { font-size: 19px; letter-spacing: -0.02em; }
+.island__sub { margin-top: 1px; font-size: 11px; color: rgba(246, 242, 233, 0.42); }
+.island__btns { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 11px; }
+.island__btns:has(> :only-child) { grid-template-columns: 1fr; }
+.island__btn {
+  height: 34px;
+  border-radius: 13px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #f6f2e9;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: transform 0.2s var(--ease);
+}
+.island__btn:active { transform: scale(0.97); }
+.island__btn[data-p="true"] { color: #22190d; background: #f2e7d5; border-color: transparent; }
 
 /* -------------------------------------------------------------- баланс --- */
 
@@ -952,19 +1023,19 @@ input { font: inherit; color: inherit; border: 0; background: none; outline: non
 
 .nav {
   position: absolute;
-  left: 12px; right: 12px;
+  left: 34px; right: 34px;
   bottom: calc(12px + var(--safe-b));
   z-index: 30;
   height: var(--nav-h);
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: center;
-  border-radius: 22px;
+  border-radius: 999px;
   background: var(--nav);
   border: 1px solid var(--nav-line);
   backdrop-filter: blur(26px) saturate(180%);
   -webkit-backdrop-filter: blur(26px) saturate(180%);
-  box-shadow: 0 18px 40px -20px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 18px 40px -20px rgba(0, 0, 0, 0.6);
 }
 
 .nav__item {
@@ -1545,6 +1616,8 @@ input { font: inherit; color: inherit; border: 0; background: none; outline: non
 
 @media (max-width: 360px) {
   :root { --gut: 14px; }
+  /* на узких экранах панель чуть шире, чтобы крайние иконки не липли к скруглению */
+  .nav { left: 20px; right: 20px; }
   .action { font-size: 13px; gap: 6px; padding: 11px 5px; }
   .action__i { width: 20px; height: 20px; }
   .ocard { flex-basis: 198px; }
