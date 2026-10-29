@@ -49,6 +49,11 @@
   --up: #9ecb86;
   --down: #e69a86;
 
+  --bar-idle: rgba(158, 203, 134, 0.2);
+  --bar-on: #9ecb86;
+  --tip-bg: #9ecb86;
+  --tip-txt: #141c0f;
+
   --sheet: #171c10;
   --veil: rgba(5, 7, 3, 0.7);
   --nav: rgba(32, 37, 26, 0.9);
@@ -79,6 +84,11 @@
 
   --up: #4f7a3f;
   --down: #b4553f;
+
+  --bar-idle: rgba(43, 58, 30, 0.16);
+  --bar-on: #2b3a1e;
+  --tip-bg: #2b3a1e;
+  --tip-txt: #f6f2e9;
 
   --sheet: #fffdf9;
   --veil: rgba(28, 22, 12, 0.38);
@@ -1809,4 +1819,134 @@ input { font: inherit; color: inherit; border: 0; background: none; outline: non
 }
 .cat__empty b { font-size: 15px; font-weight: 600; }
 .cat__empty span { font-size: 13px; color: var(--on-2); }
+
+
+/* ---------------------------------------------------------- аналитика ---- */
+
+.seg--full { width: 100%; }
+.seg--full button { flex: 1; }
+
+.an__top {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 38px;
+  align-items: center;
+  gap: 8px;
+  padding: 2px var(--gut) 0;
+}
+.an__title {
+  overflow: hidden;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  text-align: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.an__round {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--on-2);
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  box-shadow: var(--shadow);
+  transition: transform 0.22s var(--ease);
+}
+.an__round:active { transform: scale(0.94); }
+
+.an__seg { padding: 14px var(--gut) 0; }
+
+.an__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 20px var(--gut) 8px;
+}
+.an__head h2 { font-size: 16.5px; font-weight: 700; letter-spacing: -0.025em; }
+.an__period {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--on-3);
+  white-space: nowrap;
+}
+
+.an__donut { position: relative; height: 214px; margin: 2px var(--gut) 0; }
+.an__center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 3px;
+  pointer-events: none;
+}
+.an__center b { font-size: 26px; font-weight: 700; letter-spacing: -0.04em; }
+.an__center span { font-size: 11.5px; color: var(--on-3); }
+
+.an__legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 14px;
+  padding: 14px var(--gut) 0;
+}
+.an__leg {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--on-2);
+}
+.an__dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.an__leg-n { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.an__leg b { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--on); }
+
+.an__insight {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin: 18px var(--gut) 0;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(79, 122, 63, 0.1);
+  border: 1px solid rgba(79, 122, 63, 0.16);
+}
+:root[data-theme="dark"] .an__insight {
+  background: rgba(158, 203, 134, 0.1);
+  border-color: rgba(158, 203, 134, 0.16);
+}
+.an__insight-i {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #4f7a3f;
+  background: var(--surface-2);
+}
+:root[data-theme="dark"] .an__insight-i { color: #9ecb86; }
+.an__insight b { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; }
+.an__insight p { margin-top: 2px; font-size: 11.5px; line-height: 1.45; color: var(--on-2); }
+.an__insight > svg { color: var(--on-3); }
+
+.an__bars { position: relative; height: 172px; margin: 0 var(--gut); }
+.an__tip {
+  position: absolute;
+  transform: translateX(-50%);
+  padding: 4px 9px;
+  border-radius: 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--tip-txt);
+  background: var(--tip-bg);
+  box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+.an__bars .recharts-surface { overflow: visible; }
 

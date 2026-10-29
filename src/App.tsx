@@ -193,7 +193,7 @@ function Shell() {
           {tab === "market" && <Market onAsset={setAsset} onProfile={() => setTab("profile")} />}
           {tab === "stats" && (
             <Suspense fallback={<div className="screen" />}>
-              <Stats onKyc={() => setKyc(true)} />
+              <Stats onKyc={() => setKyc(true)} onBack={() => setTab("home")} />
             </Suspense>
           )}
           {tab === "profile" && <Profile onKyc={() => setKyc(true)} onDemo={() => setStub(true)} />}

@@ -10,14 +10,16 @@ export function Seg<V extends string | number>({
   options,
   onChange,
   name,
+  wide,
 }: {
   value: V;
   options: { v: V; label: React.ReactNode }[];
   onChange: (v: V) => void;
   name: string;
+  wide?: boolean;
 }) {
   return (
-    <div className="seg seg--lg">
+    <div className={`seg seg--lg${wide ? " seg--full" : ""}`}>
       {options.map((o) => (
         <button key={o.v} data-on={o.v === value} onClick={() => onChange(o.v)} aria-label={String(o.v)}>
           {o.v === value && (
