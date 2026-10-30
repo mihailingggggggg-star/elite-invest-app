@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Ring } from "ldrs/react";
 import "ldrs/react/Ring.css";
@@ -33,15 +33,29 @@ export function PushConfirm({
   const [code] = useState(() => String(1000 + Math.floor(Math.random() * 8999)));
   const now = new Date();
 
+  /* Колбэк и таймеры держим в ref: родитель пересоздаёт onSigned на каждом
+     рендере, и цепочка через useEffect сбрасывалась бесконечно — договор
+     тогда не сохранялся. Здесь подпись отрабатывает ровно один раз. */
+  const signedRef = useRef(onSigned);
+  signedRef.current = onSigned;
+  const timers = useRef<number[]>([]);
+  const busy = useRef(false);
+
   useEffect(() => {
-    if (state !== "signed") return;
-    const id = window.setTimeout(onSigned, 1100);
-    return () => window.clearTimeout(id);
-  }, [state, onSigned]);
+    const list = timers;
+    return () => list.current.forEach(window.clearTimeout);
+  }, []);
 
   const confirm = () => {
+    if (busy.current) return;
+    busy.current = true;
     setState("signing");
-    window.setTimeout(() => setState("signed"), 850);
+    timers.current.push(
+      window.setTimeout(() => {
+        setState("signed");
+        timers.current.push(window.setTimeout(() => signedRef.current(), 700));
+      }, 850)
+    );
   };
 
   return (

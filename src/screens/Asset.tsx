@@ -1,23 +1,28 @@
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { assetById, COMPANY, news, products, stages, ui, type Contract } from "../lib/data";
 import {
-  accrued,
-  contractValue,
-  maturity,
-  money,
-  monthlyPayout,
-  nextPayoutDate,
-  shortDate,
-  termIncome,
-  useApp,
-  useT,
-} from "../lib/app";
-import { Glass } from "../components/Glass";
-import { IcBack, IcDoc, IcOut, IcSeal, IcArrow } from "../components/Icons";
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  Building2,
+  CalendarDays,
+  ChevronDown,
+  Coins,
+  Heart,
+  MapPin,
+  Share2,
+  Star,
+  Wallet,
+} from "lucide-react";
+import { assetById, COMPANY, stages, ui } from "../lib/data";
+import { money, useApp, useT } from "../lib/app";
 
-type Tab = "overview" | "figures" | "news" | "deal";
-
+/**
+ * Карточка объекта 1:1 по референсу: галерея на весь верх со счётчиком кадров,
+ * круглая кнопка «назад» и поделиться/избранное, белый лист со скруглением,
+ * заголовок + ставка, четыре факта с иконками, цена и кнопка, «Об объекте»
+ * с раскрытием, этапы проекта чипами и нижняя панель с итогом и CTA.
+ */
 export function Asset({
   id,
   onBack,
@@ -31,21 +36,69 @@ export function Asset({
 }) {
   const a = assetById(id);
   const t = useT();
-  const { lang, contracts, user } = useApp();
-  const [tab, setTab] = useState<Tab>("overview");
-  const now = new Date();
+  const { lang, contracts } = useApp();
+  const [full, setFull] = useState(false);
+  const [idx, setIdx] = useState(0);
+  const [fav, setFav] = useState(() => {
+    try {
+      return (JSON.parse(localStorage.getItem("esmar-favs") || "[]") as string[]).includes(id);
+    } catch {
+      return false;
+    }
+  });
+  const gal = useRef<HTMLDivElement>(null);
 
-  const p = products[a.product];
   const mine = contracts.filter((c) => c.assetId === a.id);
   const funded = Math.round((a.raised / a.target) * 100);
+  const cur = Math.min(Math.max(a.stage - 1, 0), stages.length - 1);
   const consultOnly = a.product === "partnership";
 
-  const tabs: { id: Tab; label: string }[] = [
-    { id: "overview", label: t(ui.tabOverview) },
-    { id: "figures", label: t(ui.tabFigures) },
-    { id: "news", label: t(ui.tabNews) },
-    { id: "deal", label: t(ui.tabDeal) },
-  ];
+  /**
+   * На сайте у объекта одна фотография. Чтобы галерею можно было листать,
+   * к ней добавляются крупные фрагменты того же кадра (разный зум и точка
+   * кадрирования) — когда появятся настоящие снимки, достаточно положить их
+   * в photos[] у объекта.
+   */
+  const slides = useMemo(() => {
+    const list = a.photos?.length ? a.photos : [a.img];
+    if (list.length > 1) return list.map((src) => ({ src, pos: "50% 50%", scale: 1 }));
+    return [
+      { src: list[0], pos: "50% 50%", scale: 1 },
+      { src: list[0], pos: "32% 78%", scale: 1.6 },
+      { src: list[0], pos: "72% 74%", scale: 1.95 },
+    ];
+  }, [a]);
+
+  const onGalScroll = () => {
+    const el = gal.current;
+    if (!el) return;
+    setIdx(Math.min(slides.length - 1, Math.round(el.scrollLeft / el.clientWidth)));
+  };
+
+  const share = async () => {
+    const url = `${COMPANY.site}/katalog`;
+    const data = { title: a.name[lang], text: `${a.name[lang]} — ESMAR`, url };
+    try {
+      if (navigator.share) await navigator.share(data);
+      else await navigator.clipboard.writeText(url);
+    } catch {
+      /* пользователь закрыл шит — ничего не делаем */
+    }
+  };
+
+  const toggleFav = () => {
+    setFav((v) => {
+      const next = !v;
+      try {
+        const cur = JSON.parse(localStorage.getItem("esmar-favs") || "[]") as string[];
+        const list = next ? [...new Set([...cur, a.id])] : cur.filter((x) => x !== a.id);
+        localStorage.setItem("esmar-favs", JSON.stringify(list));
+      } catch {
+        /* приватный режим */
+      }
+      return next;
+    });
+  };
 
   return (
     <motion.div
@@ -55,347 +108,195 @@ export function Asset({
       exit={{ x: "100%" }}
       transition={{ type: "spring", stiffness: 320, damping: 34, mass: 0.7 }}
     >
-      <div className="det__scroll">
-        <div className="det__hero">
-          <img src={`${import.meta.env.BASE_URL}obj/${a.img}`} alt="" />
-          <button className="det__back" onClick={onBack} aria-label={t(ui.back)}>
-            <IcBack />
-          </button>
-          <div className="det__tags">
-            <span className="tag tag--y">{p.name[lang]}</span>
-            <span className="tag">{a.city[lang]}</span>
-          </div>
-        </div>
-
-        <div className="det__head">
-          <h2 className="det__name">{a.name[lang]}</h2>
-          <div className="det__sub">
-            {a.kind[lang]} · {a.address[lang]}
-            {a.area !== "—" ? ` · ${a.area}` : ""}
-          </div>
-          <div className="det__price">
-            <b className="tnum brand">
-              {p.upTo ? "до " : ""}
-              {a.rate}%
-            </b>
-            <span className="det__per">{t(ui.perYear)}</span>
-          </div>
-          <div className="det__meta">
-            <span>
-              {t(ui.term)}: {a.term[lang]}
-            </span>
-            <span>
-              {t(ui.payout)}: {a.payout[lang]}
-            </span>
-          </div>
-        </div>
-
-        <div className="tabs">
-          {tabs.map((x) => (
-            <button key={x.id} data-on={tab === x.id} onClick={() => setTab(x.id)}>
-              {tab === x.id && (
-                <motion.span
-                  className="tabs__pill"
-                  layoutId="asset-tab"
-                  transition={{ type: "spring", stiffness: 420, damping: 34 }}
+      <div className="dt__scroll">
+        <div className="dt__hero">
+          <div className="dt__gal" ref={gal} onScroll={onGalScroll}>
+            {slides.map((s, i) => (
+              <div className="dt__slide" key={i}>
+                <img
+                  src={`${import.meta.env.BASE_URL}obj/${s.src}`}
+                  alt={`${a.name[lang]} — ${i + 1}`}
+                  style={{ objectPosition: s.pos, transform: `scale(${s.scale})` }}
+                  draggable={false}
                 />
-              )}
-              {x.label}
+              </div>
+            ))}
+          </div>
+
+          <div className="dt__top">
+            <button className="dt__round" onClick={onBack} type="button" aria-label={t(ui.back)}>
+              <ArrowLeft size={18} strokeWidth={2.2} />
             </button>
-          ))}
+            <div className="dt__acts">
+              <button className="dt__round" onClick={share} type="button" aria-label={t(ui.shareAction)}>
+                <Share2 size={17} strokeWidth={2.1} />
+              </button>
+              <button
+                className="dt__round"
+                data-on={fav}
+                onClick={toggleFav}
+                type="button"
+                aria-pressed={fav}
+                aria-label={t(ui.favorite)}
+              >
+                <Heart size={17} strokeWidth={2.1} fill={fav ? "currentColor" : "none"} />
+              </button>
+            </div>
+          </div>
+
+          <span className="dt__count tnum">
+            {idx + 1}/{slides.length}
+          </span>
         </div>
 
-        <div className="pad" style={{ marginTop: 16 }}>
-          {tab === "overview" && (
-            <div className="stack">
-              <p className="det__about">{a.about[lang]}</p>
-
-              <Glass className="kpi" radius={20}>
-                <b>{t(ui.progress)}</b>
-                <span className="tnum">
-                  {money(a.raised)} <i className="dim">/ {money(a.target)}</i>
-                </span>
-                <div className="progress" style={{ marginTop: 10 }}>
-                  <motion.i
-                    initial={{ width: 0 }}
-                    animate={{ width: `${funded}%` }}
-                    transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-                  />
-                </div>
-                <div className="kpi__f">
-                  <span>
-                    {funded}% {t(ui.collected)}
-                  </span>
-                  <span>{a.handover[lang]}</span>
-                </div>
-              </Glass>
-
-              <Glass className="kpi" radius={20}>
-                <b>{t(ui.buildProgress)}</b>
-                <span className="tnum">{a.progress}%</span>
-                <Track index={a.stage} />
-              </Glass>
-
-              <div className="facts">
-                {a.facts.map((f, i) => (
-                  <Glass className="fact" radius={14} key={i}>
-                    <b>{f.k[lang]}</b>
-                    <span>{f.v}</span>
-                  </Glass>
-                ))}
-              </div>
+        <div className="dt__sheet">
+          <div className="dt__title">
+            <div>
+              <h1>{a.name[lang]}</h1>
+              <span className="dt__loc">
+                <MapPin size={12} strokeWidth={2.4} />
+                {a.city[lang]}, {a.address[lang]}
+              </span>
             </div>
-          )}
-
-          {tab === "figures" && (
-            <div className="facts">
-              <Glass className="fact" radius={14}>
-                <b>{t(ui.rate)}</b>
-                <span className="tnum brand">
-                  {p.upTo ? "до " : ""}
-                  {a.rate}% {t(ui.perYear)}
-                </span>
-              </Glass>
-              <Glass className="fact" radius={14}>
-                <b>{t(ui.term)}</b>
-                <span className="tnum">{a.term[lang]}</span>
-              </Glass>
-              <Glass className="fact" radius={14}>
-                <b>{t(ui.payout)}</b>
-                <span>{a.payout[lang]}</span>
-              </Glass>
-              <Glass className="fact" radius={14}>
-                <b>{t(ui.minTicket)}</b>
-                <span className="tnum">{money(a.min)}</span>
-              </Glass>
-              <Glass className="fact" radius={14}>
-                <b>{t(ui.raised)}</b>
-                <span className="tnum">{money(a.raised)}</span>
-              </Glass>
-              <Glass className="fact" radius={14}>
-                <b>{t(ui.goal)}</b>
-                <span className="tnum">{money(a.target)}</span>
-              </Glass>
-              <Glass className="fact" radius={14}>
-                <b>{t(ui.readiness)}</b>
-                <span className="tnum">{a.progress}%</span>
-              </Glass>
-              <Glass className="fact" radius={14}>
-                <b>{t(ui.handover)}</b>
-                <span>{a.handover[lang]}</span>
-              </Glass>
+            <div className="dt__rate">
+              <b className="tnum">
+                {a.rate}% <Star size={11} strokeWidth={2.4} fill="currentColor" />
+              </b>
+              <span>{t(ui.perYear)}</span>
             </div>
-          )}
+          </div>
 
-          {tab === "news" && (
-            <div className="news">
-              {news.slice(0, 3).map((n, i) => (
-                <Glass className="ncard" radius={20} key={i}>
-                  <div className="ncard__img">
-                    <img src={`${import.meta.env.BASE_URL}obj/${n.img}`} alt="" loading="lazy" />
-                  </div>
-                  <div className="ncard__b">
-                    <div className="ncard__h">
-                      <span className="ncard__tag" data-about={n.about}>
-                        {n.tag[lang]}
-                      </span>
-                      <span>
-                        {n.date} · {n.source}
-                      </span>
-                    </div>
-                    <h4>{n.title[lang]}</h4>
-                    <p>{n.text[lang]}</p>
-                    <a href={n.url} target="_blank" rel="noreferrer">
-                      {t(ui.readSource)} <IcOut />
-                    </a>
-                  </div>
-                </Glass>
-              ))}
+          <div className="dt__facts">
+            <div>
+              <CalendarDays size={19} strokeWidth={1.9} />
+              <b>{a.term[lang]}</b>
+              <span>{t(ui.term)}</span>
             </div>
-          )}
+            <div>
+              <Wallet size={19} strokeWidth={1.9} />
+              <b>{a.payout[lang]}</b>
+              <span>{t(ui.payout)}</span>
+            </div>
+            <div>
+              <Coins size={19} strokeWidth={1.9} />
+              <b className="tnum">{money(a.min)}</b>
+              <span>{t(ui.minShort)}</span>
+            </div>
+            <div>
+              <Building2 size={19} strokeWidth={1.9} />
+              <b className="tnum">{a.progress}%</b>
+              <span>{t(ui.readiness)}</span>
+            </div>
+          </div>
 
-          {tab === "deal" && (
-            <div className="stack">
-              {user && mine.length > 0 && (
-                <Glass className="kpi" radius={20}>
-                  <b>{t(ui.myContractHere)}</b>
-                  {mine.map((c) => (
-                    <div key={c.no} className="ctr">
-                      <div className="ctr__t">
-                        <span className="tnum">{c.no}</span>
-                        <span className="badge">
-                          <IcSeal size={13} /> {shortDate(c.opened)}
-                        </span>
-                      </div>
-                      <div className="ctr__f">
-                        <span>
-                          <b>{money(c.amount)}</b>
-                          <i>{t(ui.bodyShort)}</i>
-                        </span>
-                        <span>
-                          <b className="up tnum">+{money(Math.round(accrued(c, now)))}</b>
-                          <i>{t(ui.accrued)}</i>
-                        </span>
-                        <span>
-                          <b className="tnum">{money(Math.round(contractValue(c, now)))}</b>
-                          <i>{t(ui.portfolio)}</i>
-                        </span>
-                      </div>
-                      <div className="ctr__n">{t(ui.maturity)}: {shortDate(maturity(c).toISOString())}</div>
-                      <Schedule c={c} />
-                    </div>
-                  ))}
-                </Glass>
-              )}
-
-              <Glass className="kpi" radius={20}>
-                <b>{t(ui.offer)}</b>
-                <div className="dl">
-                  <Row k={t(ui.rate)} v={`${p.upTo ? "до " : ""}${a.rate}% ${t(ui.perYear)}`} accent />
-                  <Row k={t(ui.term)} v={a.term[lang]} />
-                  <Row k={t(ui.payout)} v={a.payout[lang]} />
-                  <Row k={t(ui.minTicket)} v={money(a.min)} />
-                  <Row k={t(ui.share)} v={`1% = ${money(Math.round(a.target / 100))}`} />
-                </div>
-              </Glass>
-
-              <Calculator rate={a.rate} min={a.min} months={a.product === "rent" ? 12 : 24} />
-
-              <div className="note note--dim">{t(ui.offerNote)}</div>
-
-              <a className="glass prow tap" style={{ borderRadius: 20 }} href={`${COMPANY.site}/dokumenty`} target="_blank" rel="noreferrer">
-                <span className="prow__i">
-                  <IcDoc />
-                </span>
-                <span>
-                  <span className="prow__n">{t(ui.documents)}</span>
-                  <span className="prow__s">Договор доверительного управления · генеральное соглашение</span>
-                </span>
-                <IcOut />
+          <div className="dt__price">
+            <div>
+              <span>{t(ui.minTicket)}</span>
+              <b className="tnum">{money(a.min)}</b>
+            </div>
+            {consultOnly ? (
+              <a
+                className="dt__cta"
+                href={`https://wa.me/${COMPANY.whatsapp}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {t(ui.manager)}
               </a>
+            ) : (
+              <button className="dt__cta" onClick={onBuy} type="button">
+                {t(ui.buy)}
+              </button>
+            )}
+          </div>
+
+          <h2 className="dt__h2">{t(ui.aboutProperty)}</h2>
+          <p className="dt__about" data-full={full}>
+            {a.about[lang]}
+          </p>
+          <button className="dt__more" onClick={() => setFull((v) => !v)} type="button">
+            {full ? t(ui.collapse) : t(ui.readMore)}
+            <ChevronDown size={14} strokeWidth={2.4} data-full={full} />
+          </button>
+
+          <h2 className="dt__h2">{t(ui.buildProgress)}</h2>
+          <div className="dt__chips">
+            {stages.map((s, i) => (
+              <span className="dt__chip" data-on={i === cur} data-done={i < cur} key={i}>
+                <b>{i + 1}</b>
+                {s[lang]}
+              </span>
+            ))}
+          </div>
+          <div className="dt__chips dt__chips--info">
+            <span className="dt__chip dt__chip--info">{a.handover[lang]}</span>
+            <span className="dt__chip dt__chip--info tnum">
+              {funded}% {t(ui.collected)}
+            </span>
+            <span className="dt__chip dt__chip--info tnum">{money(a.target)}</span>
+          </div>
+
+          <div className="dt__fund">
+            <div className="dt__fund-h">
+              <span>{t(ui.progress)}</span>
+              <b className="tnum">{funded}%</b>
             </div>
-          )}
+            <div className="progress">
+              <i style={{ width: `${Math.min(100, funded)}%` }} />
+            </div>
+            <div className="dt__fund-f">
+              <span className="tnum">
+                {money(a.raised)} / {money(a.target)}
+              </span>
+              <span>{a.handover[lang]}</span>
+            </div>
+          </div>
+
+          <a
+            className="dt__doc"
+            href={`${COMPANY.site}/dokumenty`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t(ui.documents)}
+            <ArrowUpRight size={14} strokeWidth={2.2} />
+          </a>
+
+          <p className="demo">{t(ui.demoNames)}</p>
         </div>
       </div>
 
-      <div className="det__bottom" style={consultOnly ? { gridTemplateColumns: "1fr" } : undefined}>
-        {!consultOnly && (
-          <button className="btn btn--s" onClick={onTerminate}>
-            {t(ui.terminate)}
-          </button>
-        )}
-        {consultOnly ? (
-          <a className="btn btn--p" href={`https://wa.me/${COMPANY.whatsapp}`} target="_blank" rel="noreferrer">
-            {t(ui.contactManager)} <IcArrow size={15} />
-          </a>
-        ) : (
-          <button className="btn btn--p" onClick={onBuy}>
-            {t(ui.buy)}
-          </button>
-        )}
+      <div className="dt__bar">
+        <div className="dt__bar-l">
+          <span>{mine.length ? t(ui.portfolio) : t(ui.minTicket)}</span>
+          <b className="tnum">
+            {mine.length ? money(mine.reduce((s, c) => s + c.amount, 0)) : money(a.min)}
+          </b>
+        </div>
+        <div className="dt__bar-r">
+          {mine.length > 0 && (
+            <button className="dt__ghost" onClick={onTerminate} type="button">
+              {t(ui.terminate)}
+            </button>
+          )}
+          {consultOnly ? (
+            <a
+              className="dt__cta dt__cta--bar"
+              href={`https://wa.me/${COMPANY.whatsapp}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {t(ui.manager)}
+              <ArrowRight size={15} strokeWidth={2.4} />
+            </a>
+          ) : (
+            <button className="dt__cta dt__cta--bar" onClick={onBuy} type="button">
+              {t(ui.buy)}
+              <ArrowRight size={15} strokeWidth={2.4} />
+            </button>
+          )}
+        </div>
       </div>
     </motion.div>
-  );
-}
-
-/** График выплат: у «Ренты» — ближайшие три месяца, у остальных — дата расчёта. */
-function Schedule({ c }: { c: Contract }) {
-  const t = useT();
-  const { lang } = useApp();
-  const now = new Date();
-
-  if (c.product !== "rent") {
-    return (
-      <div className="sched">
-        <div className="sched__k">{t(ui.scheduled)}</div>
-        <div className="sched__row">
-          <span>{shortDate(maturity(c).toISOString())}</span>
-          <b className="tnum">{money(Math.round(c.amount + termIncome(c)))}</b>
-        </div>
-      </div>
-    );
-  }
-
-  const first = nextPayoutDate(c, now);
-  return (
-    <div className="sched">
-      <div className="sched__k">{t(ui.scheduled)}</div>
-      {[0, 1, 2].map((i) => {
-        const d = new Date(first);
-        d.setMonth(d.getMonth() + i);
-        return (
-          <div className="sched__row" key={i}>
-            <span>{shortDate(d.toISOString())}</span>
-            <b className="tnum">{money(Math.round(monthlyPayout(c)))}</b>
-          </div>
-        );
-      })}
-      <div className="sched__n">{lang === "ky" ? "ай сайын" : "ежемесячно"}</div>
-    </div>
-  );
-}
-
-function Row({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
-  return (
-    <div className="dl__row">
-      <span>{k}</span>
-      <b className={`tnum ${accent ? "brand" : ""}`}>{v}</b>
-    </div>
-  );
-}
-
-/** Полоса этапов строительства — как на карточке проекта esmar.kg. */
-function Track({ index }: { index: number }) {
-  const { lang } = useApp();
-  return (
-    <div className="track">
-      {stages.map((s, i) => (
-        <span key={i} data-on={i <= index} data-cur={i === index}>
-          <i />
-          <em>{s[lang]}</em>
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function Calculator({ rate, min, months }: { rate: number; min: number; months: number }) {
-  const t = useT();
-  const [amount, setAmount] = useState(String(Math.max(min, 1000)));
-  const value = Number(amount.replace(/\D/g, "")) || 0;
-  const income = (value * rate * (months / 12)) / 100;
-
-  return (
-    <Glass className="kpi" radius={20}>
-      <b>{t(ui.calc)}</b>
-
-      <div className="amount amount--sm">
-        <input
-          value={amount.replace(/\B(?=(\d{3})+(?!\d))/g, " ")}
-          onChange={(e) => setAmount(e.target.value.replace(/\D/g, "").slice(0, 8))}
-          inputMode="numeric"
-          aria-label={t(ui.amount)}
-          className="tnum"
-        />
-        <span>$</span>
-      </div>
-
-      <div className="chips" style={{ marginTop: 10 }}>
-        {[500, 1000, 5000, 10_000].map((v) => (
-          <button key={v} data-on={value === v} onClick={() => setAmount(String(v))} className="tnum">
-            {v.toLocaleString("ru-RU")}
-          </button>
-        ))}
-      </div>
-
-      <div className="dl" style={{ marginTop: 12 }}>
-        <Row k={t(ui.calcIncome)} v={money(Math.round(income))} accent />
-        <Row k={t(ui.calcTotal)} v={money(Math.round(value + income))} />
-      </div>
-
-      <div className="kpi__f" style={{ marginTop: 8 }}>
-        <span>{t(ui.calcNote)}</span>
-      </div>
-    </Glass>
   );
 }

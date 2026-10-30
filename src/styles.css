@@ -1,5 +1,5 @@
 /* ==========================================================================
-   ESMAR — мобильное приложение долевого управления
+   ESMAR — мобильное приложение доверительного управления
    Устройство экрана: сверху анимированная градиентная шапка (баланс, карточки
    объектов, быстрые действия), снизу белая панель со скруглением, которая
    наезжает на шапку при скролле. Шапка липкая, панель едет поверх неё.
@@ -56,7 +56,7 @@
 
   --sheet: #171c10;
   --veil: rgba(5, 7, 3, 0.7);
-  --nav: rgba(32, 37, 26, 0.9);
+  --nav: rgba(30, 35, 24, 0.96);
   --nav-line: rgba(255, 255, 255, 0.14);
   --nav-ico: rgba(255, 255, 255, 0.62);
   --shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.8);
@@ -502,7 +502,8 @@ input { font: inherit; color: inherit; border: 0; background: none; outline: non
   position: relative;
   z-index: 2;
   margin-top: -26px;
-  min-height: 100vh;
+  /* не тянем панель на лишний экран: иначе в конце страницы остаётся пустота */
+  min-height: auto;
   background: var(--surface);
   border-radius: 30px 30px 0 0;
   box-shadow: 0 -24px 50px -28px rgba(0, 0, 0, 0.55);
@@ -2140,23 +2141,27 @@ input { font: inherit; color: inherit; border: 0; background: none; outline: non
 .pf__card b { font-size: 13.5px; font-weight: 600; letter-spacing: -0.01em; }
 .pf__sub { font-size: 10.5px; color: var(--on-3); }
 
-.pf__faces { display: flex; align-items: center; margin-bottom: auto; }
-.pf__faces i {
+/* аватар менеджера: один круг + точка «на связи» */
+.pf__face {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 30px; height: 30px;
-  margin-right: -9px;
+  width: 34px; height: 34px;
+  margin-bottom: auto;
   border-radius: 50%;
-  font-size: 9.5px;
-  font-style: normal;
-  font-weight: 700;
-  color: var(--fill-txt);
-  background: var(--fill);
+  color: var(--up);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--stroke);
+}
+:root[data-theme="dark"] .pf__face { background: #1b2213; }
+.pf__face .pf__on {
+  position: absolute;
+  right: 1px; bottom: 1px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: #5fbf6a;
   box-shadow: 0 0 0 2px var(--surface);
 }
-.pf__faces i:nth-child(2) { background: var(--brand); color: #fff; }
-.pf__faces i:nth-child(3) { color: var(--up); background: var(--surface-2); }
-:root[data-theme="dark"] .pf__faces i:nth-child(3) { background: #1b2213; }
 
 .pf__cardico {
   display: grid;
@@ -2230,3 +2235,317 @@ input { font: inherit; color: inherit; border: 0; background: none; outline: non
 .pf__row--out .pf__row-i,
 .pf__row--out b { color: var(--down); }
 
+
+/* ------------------------------------------------- карточка объекта ------ */
+
+.dt__scroll {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: calc(92px + var(--safe-b));
+  background: var(--surface);
+}
+
+.dt__hero {
+  position: relative;
+  height: clamp(250px, 66vw, 330px);
+  overflow: hidden;
+  background: #14100a;
+}
+.dt__gal {
+  display: flex;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.dt__gal::-webkit-scrollbar { display: none; }
+.dt__slide {
+  flex: 0 0 100%;
+  height: 100%;
+  overflow: hidden;
+  scroll-snap-align: start;
+}
+.dt__slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: center;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.dt__top {
+  position: absolute;
+  top: calc(10px + var(--safe-t));
+  left: 14px; right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 3;
+  pointer-events: none;
+}
+.dt__top > * { pointer-events: auto; }
+.dt__acts { display: flex; gap: 8px; }
+.dt__round {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: rgba(20, 16, 10, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  transition: transform 0.22s var(--ease), background 0.2s var(--ease);
+}
+.dt__round:active { transform: scale(0.93); }
+.dt__round[data-on="true"] { color: #f2a0a0; background: rgba(20, 16, 10, 0.55); }
+
+.dt__count {
+  position: absolute;
+  right: 14px;
+  bottom: 34px;
+  z-index: 3;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(20, 16, 10, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.dt__sheet {
+  position: relative;
+  z-index: 2;
+  margin-top: -22px;
+  padding: 16px var(--gut) 8px;
+  border-radius: 26px 26px 0 0;
+  background: var(--surface);
+}
+
+.dt__title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dt__title h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.2; }
+.dt__loc {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 5px;
+  font-size: 11.5px;
+  color: var(--on-3);
+}
+.dt__loc svg { margin-top: 2px; flex-shrink: 0; }
+.dt__rate { text-align: right; flex-shrink: 0; }
+.dt__rate b {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--brand-deep);
+}
+:root[data-theme="dark"] .dt__rate b { color: var(--brand-lit); }
+.dt__rate span { display: block; font-size: 10px; color: var(--on-3); }
+
+.dt__facts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 16px 0 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--hair);
+  border-bottom: 1px solid var(--hair);
+}
+.dt__facts > div {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-width: 0;
+  text-align: center;
+  color: var(--on-2);
+}
+.dt__facts b {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--on);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.dt__facts span { font-size: 9.5px; color: var(--on-3); }
+
+.dt__price {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+.dt__price > div { display: grid; gap: 1px; }
+.dt__price > div span { font-size: 10.5px; color: var(--on-3); }
+.dt__price > div b { font-size: 21px; font-weight: 700; letter-spacing: -0.03em; }
+
+.dt__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fill-txt);
+  background: var(--fill);
+  flex-shrink: 0;
+  transition: transform 0.22s var(--ease);
+}
+.dt__cta:active { transform: scale(0.97); }
+
+.dt__h2 { margin-top: 20px; font-size: 14.5px; font-weight: 700; letter-spacing: -0.02em; }
+.dt__about {
+  margin-top: 7px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--on-2);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+.dt__about[data-full="true"] { display: block; -webkit-line-clamp: unset; line-clamp: unset; }
+.dt__more {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 6px auto 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--brand-lit);
+}
+.dt__more svg { transition: transform 0.25s var(--ease); }
+.dt__more svg[data-full="true"] { transform: rotate(180deg); }
+
+.dt__chips {
+  display: flex;
+  gap: 6px;
+  margin: 10px calc(var(--gut) * -1) 0;
+  padding: 0 var(--gut) 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.dt__chips::-webkit-scrollbar { display: none; }
+.dt__chip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 9px 12px;
+  border-radius: 13px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--on-2);
+  background: var(--fill-2);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.dt__chip b {
+  display: grid;
+  place-items: center;
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--on-2);
+  background: var(--surface);
+}
+.dt__chip[data-done="true"] b { color: #fff; background: var(--up); }
+.dt__chip[data-on="true"] {
+  color: var(--fill-txt);
+  background: var(--fill);
+  border-color: transparent;
+}
+.dt__chip[data-on="true"] b { color: var(--fill); background: var(--fill-txt); }
+.dt__chips--info { margin-top: 8px; }
+.dt__chip--info { color: var(--on-3); background: transparent; border-color: var(--stroke); }
+
+.dt__fund {
+  display: grid;
+  gap: 7px;
+  margin-top: 16px;
+  padding: 13px 14px;
+  border-radius: 18px;
+  background: var(--fill-2);
+  border: 1px solid var(--stroke);
+}
+.dt__fund-h { display: flex; align-items: baseline; justify-content: space-between; }
+.dt__fund-h span { font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--on-3); }
+.dt__fund-h b { font-size: 13px; font-weight: 700; }
+.dt__fund-f { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 10.5px; color: var(--on-3); }
+
+.dt__doc {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand-lit);
+}
+
+.dt__bar {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px var(--gut) calc(12px + var(--safe-b));
+  background: color-mix(in srgb, var(--surface) 97%, transparent);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid var(--hair);
+  box-shadow: 0 -8px 20px -14px rgba(0, 0, 0, 0.35);
+}
+.dt__bar-l { display: grid; gap: 1px; min-width: 0; }
+.dt__bar-l span { font-size: 10px; color: var(--on-3); }
+.dt__bar-l b { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
+.dt__bar-r { display: flex; align-items: center; gap: 8px; }
+.dt__cta--bar { height: 46px; padding: 0 18px; font-size: 13.5px; }
+.dt__ghost {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--on);
+  background: color-mix(in srgb, var(--on) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--on) 10%, transparent);
+}
+
+/* --- узкие экраны: факты объекта не обрезаем («в конце срока», «ежемесячно») --- */
+@media (max-width: 360px) {
+  .dt__facts b {
+    font-size: 10px;
+    white-space: normal;
+    line-height: 1.18;
+    text-wrap: balance;
+    hyphens: auto;
+    overflow: visible;
+    text-overflow: clip;
+  }
+  .dt__facts span { font-size: 9px; }
+}

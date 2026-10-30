@@ -20,6 +20,7 @@ import { COMPANY, ui } from "../lib/data";
 import {
   accrued,
   contractsUnit,
+  daysWord,
   money,
   monthlyPayout,
   nextPayoutDate,
@@ -179,7 +180,9 @@ export function Profile({
               <CalendarDays size={15} strokeWidth={2.2} />
             </span>
             <b className="tnum">{daysIn}</b>
-            <span>{t(ui.pfDays)}</span>
+            <span>
+              {daysWord(daysIn)} {t(ui.pfDaysIn)}
+            </span>
           </div>
         </div>
       ) : (
@@ -201,12 +204,9 @@ export function Profile({
 
       <div className="pf__duo">
         <a className="pf__card" href={`https://wa.me/${COMPANY.whatsapp}`} target="_blank" rel="noreferrer">
-          <span className="pf__faces" aria-hidden>
-            <i>МБ</i>
-            <i>НК</i>
-            <i>
-              <Sprout size={12} strokeWidth={2.4} />
-            </i>
+          <span className="pf__face" aria-hidden>
+            <Sprout size={17} strokeWidth={2.2} />
+            <i className="pf__on" />
           </span>
           <b>{t(ui.manager)}</b>
           <span className="pf__sub">{t(ui.pfOnline)}</span>
@@ -236,9 +236,9 @@ export function Profile({
         </span>
         <span>
           <b>
-            {money(cash)} — {t(ui.pfFreeSub)}
+            {cash > 0 ? `${money(cash)} ${t(ui.pfFreeShort)}` : t(ui.pfTopUp)}
           </b>
-          <span>{t(ui.buy)}</span>
+          <span>{cash > 0 ? t(ui.pfFreeSub) : t(ui.pfNoFunds)}</span>
         </span>
         <ChevronRight size={18} strokeWidth={2.2} />
       </button>

@@ -115,6 +115,16 @@ const termYears = (c: Contract) => c.months / 12;
 
 /** «1 договор», «2 договора», «5 договоров» / «2 келишим». */
 /** Только слово без числа: «договор / договора / договоров» — для подписи метрики. */
+/** «1 день», «2 дня», «232 дня» — числительное уже стоит рядом с метрикой. */
+export const daysWord = (n: number) => {
+  const t = Math.abs(n) % 100;
+  const u = t % 10;
+  if (t > 10 && t < 20) return "дней";
+  if (u === 1) return "день";
+  if (u >= 2 && u <= 4) return "дня";
+  return "дней";
+};
+
 export const contractsUnit = (n: number, lang: "ru" | "ky") =>
   contractsWord(n, lang).split(" ").slice(1).join(" ");
 
