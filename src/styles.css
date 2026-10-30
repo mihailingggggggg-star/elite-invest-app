@@ -1054,15 +1054,22 @@ input { font: inherit; color: inherit; border: 0; background: none; outline: non
   position: relative;
   isolation: isolate;
   justify-self: center;
-  width: 46px; height: 46px;
-  border-radius: 15px;
+  width: 50px; height: 42px;
+  /* скругление как у самой панели: капсула, а не квадрат */
+  border-radius: 999px;
   display: grid;
   place-items: center;
   color: var(--nav-ico);
   transition: color 0.25s var(--ease);
 }
 .nav__item[data-on="true"] { color: #232b1d; }
-.nav__pill { position: absolute; inset: 0; z-index: -1; border-radius: 15px; background: #f6eee1; }
+.nav__pill {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 999px;
+  background: #f6eee1;
+}
 .nav__item--act { color: var(--nav-ico); }
 .nav__item:active { transform: scale(0.94); }
 
