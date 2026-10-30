@@ -1,6 +1,6 @@
 # ESMAR — мобильное приложение доверительного управления
 
-Живая версия: https://mihailingggggggg-star.github.io/elite-invest-app/
+Живая версия: https://mihailingggggggg-star.github.io/esmar-app/
 
 Приложение для инвестиционной компании **ESMAR** (ОсОО «УК Нур Капитал»,
 лицензия Финнадзора КР № 88 от 07.08.2026 на доверительное управление
@@ -209,7 +209,7 @@ KYC — полная эмуляция в четыре шага: данные →
 
 ```sh
 npm install
-npm run dev          # http://localhost:5173/elite-invest-app/
+npm run dev          # http://localhost:5173/esmar-app/
 npm run build        # tsc -b && vite build
 npm run lint         # oxlint
 GH_TOKEN=<токен с правом repo> npm run deploy

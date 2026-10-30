@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Publishes ./dist to gh-pages. Needs GH_TOKEN with `repo` scope.
 set -euo pipefail
-REPO="mihailingggggggg-star/elite-invest-app"
+REPO="mihailingggggggg-star/esmar-app"
 : "${GH_TOKEN:?set GH_TOKEN first}"
 touch dist/.nojekyll
 cd dist
@@ -14,4 +14,4 @@ git add -A
 git -c user.email="deploy@esmar" -c user.name="esmar-deploy" commit -q -m "ESMAR deploy $(date -u +%FT%TZ)"
 git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" gh-pages:gh-pages
 rm -rf .git
-echo "https://mihailingggggggg-star.github.io/elite-invest-app/"
+echo "https://mihailingggggggg-star.github.io/esmar-app/"
