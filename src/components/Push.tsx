@@ -33,11 +33,9 @@ export function PushConfirm({
   const [code] = useState(() => String(1000 + Math.floor(Math.random() * 8999)));
   const now = new Date();
 
-  /* Колбэк и таймеры держим в ref: родитель пересоздаёт onSigned на каждом
-     рендере, и цепочка через useEffect сбрасывалась бесконечно — договор
-     тогда не сохранялся. Здесь подпись отрабатывает ровно один раз. */
-  const signedRef = useRef(onSigned);
-  signedRef.current = onSigned;
+  /* Цепочку таймеров держим в ref: через useEffect она сбрасывалась на каждом
+     ре-рендере (родитель пересоздаёт onSigned), и договор не сохранялся.
+     Колбэк берём свежий в момент клика — подпись отрабатывает ровно один раз. */
   const timers = useRef<number[]>([]);
   const busy = useRef(false);
 
@@ -49,11 +47,12 @@ export function PushConfirm({
   const confirm = () => {
     if (busy.current) return;
     busy.current = true;
+    const done = onSigned;
     setState("signing");
     timers.current.push(
       window.setTimeout(() => {
         setState("signed");
-        timers.current.push(window.setTimeout(() => signedRef.current(), 700));
+        timers.current.push(window.setTimeout(done, 700));
       }, 850)
     );
   };

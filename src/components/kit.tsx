@@ -143,12 +143,16 @@ export function SectionHead({
   return (
     <div className="sechead">
       <h2>{title}</h2>
-      {action && (
-        <button className="sechead__a" onClick={onAction} type="button">
-          {action}
-          <ArrowUpRight size={13} strokeWidth={2.4} />
-        </button>
-      )}
+      {action &&
+        (onAction ? (
+          <button className="sechead__a" onClick={onAction} type="button">
+            {action}
+            <ArrowUpRight size={13} strokeWidth={2.4} />
+          </button>
+        ) : (
+          /* счётчик без действия — не притворяемся кнопкой */
+          <span className="sechead__a sechead__a--flat">{action}</span>
+        ))}
     </div>
   );
 }

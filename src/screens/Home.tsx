@@ -16,12 +16,13 @@ import {
   TrendingUp,
   X,
 } from "lucide-react";
-import { assets, assetById, news, products, ui, type Asset as Obj } from "../lib/data";
+import { assets, news, ui, type Asset as Obj } from "../lib/data";
 import { accrued, contractValue, contractsWord, money, pct, useApp, useT } from "../lib/app";
 import { eventDate, feed, type Event } from "../lib/feed";
 import { ActionChip, Pill, SectionHead, TxRow } from "../components/kit";
 import { HeroBg } from "../components/Hero";
 import { AccountIsland } from "../components/Island";
+import { ContractsRail } from "../components/ContractsRail";
 
 const ICONS = {
   sign: FileSignature,
@@ -319,6 +320,13 @@ export function Home({
       </section>
 
       <section className="content">
+        {user && contracts.length > 0 && (
+          <>
+            <SectionHead title={t(ui.myContracts)} action={contractsWord(contracts.length, lang)} />
+            <ContractsRail contracts={contracts} onOpen={onAsset} onAnalytics={onStats} />
+          </>
+        )}
+
         <SectionHead title={t(ui.recent)} action={t(ui.all)} onAction={onAll} />
 
         <div className="txs">
@@ -347,45 +355,6 @@ export function Home({
             </div>
           )}
         </div>
-
-        {user && contracts.length > 0 && (
-          <>
-            <SectionHead title={t(ui.myContracts)} action={contractsWord(contracts.length, lang)} />
-            <div className="rows">
-              {contracts.slice(0, 4).map((c, i) => {
-                const a = assetById(c.assetId);
-                const val = contractValue(c, now);
-                const d = ((val - c.amount) / c.amount) * 100;
-                return (
-                  <motion.button
-                    key={c.no}
-                    className="hold"
-                    onClick={() => onAsset(a.id)}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.04 * i, ease: [0.22, 1, 0.36, 1] }}
-                    type="button"
-                  >
-                    <img className="hold__img" src={`${import.meta.env.BASE_URL}obj/${a.img}`} alt="" />
-                    <span className="hold__b">
-                      <span className="hold__n">{a.name[lang]}</span>
-                      <span className="hold__s">
-                        {products[c.product].name[lang]} · {c.rate}%
-                      </span>
-                    </span>
-                    <span className="hold__r">
-                      <b className="tnum">{money(Math.round(val))}</b>
-                      <i className={`tnum ${d < 0 ? "down" : "up"}`}>{pct(d)}</i>
-                    </span>
-                  </motion.button>
-                );
-              })}
-            </div>
-            <button className="linkall" onClick={onStats} type="button">
-              {t(ui.analytics)}
-            </button>
-          </>
-        )}
 
         <SectionHead title={t(ui.newsTitle)} action={t(ui.allNews)} onAction={onAllNews} />
         <div className="news">
