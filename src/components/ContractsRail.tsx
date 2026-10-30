@@ -180,7 +180,7 @@ export function ContractsRail({
       </div>
 
       <div className="ctr__bar">
-        <div className="ctr__dots" role="tablist" aria-label={t(ui.myContracts)}>
+        <div className="ctr__dots" role="tablist" aria-label={t(ui.myObjects)}>
           {contracts.length > 1 &&
             contracts.map((c, i) => (
               <button

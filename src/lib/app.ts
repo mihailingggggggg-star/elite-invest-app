@@ -128,6 +128,20 @@ export const daysWord = (n: number) => {
 export const contractsUnit = (n: number, lang: "ru" | "ky") =>
   contractsWord(n, lang).split(" ").slice(1).join(" ");
 
+/** «1 объект», «2 объекта», «5 объектов» — по числу уникальных объектов. */
+export const objectsWord = (n: number, lang: "ru" | "ky") => {
+  if (lang === "ky") return `${n} объект`;
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  const word =
+    mod10 === 1 && mod100 !== 11
+      ? "объект"
+      : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)
+        ? "объекта"
+        : "объектов";
+  return `${n} ${word}`;
+};
+
 export const contractsWord = (n: number, lang: "ru" | "ky") => {
   if (lang === "ky") return `${n} келишим`;
   const mod10 = n % 10;

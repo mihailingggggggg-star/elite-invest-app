@@ -17,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { assets, news, ui, type Asset as Obj } from "../lib/data";
-import { accrued, contractValue, contractsWord, money, pct, useApp, useT } from "../lib/app";
+import { accrued, contractValue, money, objectsWord, pct, useApp, useT } from "../lib/app";
 import { eventDate, feed, type Event } from "../lib/feed";
 import { ActionChip, Pill, SectionHead, TxRow } from "../components/kit";
 import { HeroBg } from "../components/Hero";
@@ -322,7 +322,10 @@ export function Home({
       <section className="content">
         {user && contracts.length > 0 && (
           <>
-            <SectionHead title={t(ui.myContracts)} action={contractsWord(contracts.length, lang)} />
+            <SectionHead
+              title={t(ui.myObjects)}
+              action={objectsWord(new Set(contracts.map((c) => c.assetId)).size, lang)}
+            />
             <ContractsRail contracts={contracts} onOpen={onAsset} onAnalytics={onStats} />
           </>
         )}
