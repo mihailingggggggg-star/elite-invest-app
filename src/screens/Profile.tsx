@@ -21,10 +21,11 @@ import {
   accrued,
   contractsUnit,
   daysWord,
+  fixed,
   money,
   monthlyPayout,
   nextPayoutDate,
-  pct,
+  parseDate,
   useApp,
   useT,
 } from "../lib/app";
@@ -59,7 +60,9 @@ export function Profile({
   const body = contracts.reduce((s, c) => s + c.amount, 0);
   const acc = contracts.reduce((s, c) => s + accrued(c, now), 0);
   const total = body + acc + cash;
-  const yieldPct = body ? (acc / body) * 100 : 0;
+  /* «Доходность» — средневзвешенная ставка по договорам, как в аналитике:
+     одна и та же метрика не должна показывать разные числа на разных экранах. */
+  const yieldPct = body ? contracts.reduce((s, c) => s + c.rate * c.amount, 0) / body : 0;
 
   const initials = user
     ? user.name
@@ -73,7 +76,7 @@ export function Profile({
   const handle = user ? "@" + (user.email.split("@")[0] || "esmar") : "@esmar";
 
   const firstOpened = contracts.length
-    ? contracts.map((c) => new Date(c.opened).getTime()).sort((a, b) => a - b)[0]
+    ? contracts.map((c) => parseDate(c.opened).getTime()).sort((a, b) => a - b)[0]
     : null;
   const daysIn = firstOpened ? Math.max(1, Math.floor((now.getTime() - firstOpened) / 86_400_000) + 1) : 0;
 
@@ -165,7 +168,7 @@ export function Profile({
             <span className="pf__si">
               <TrendingUp size={15} strokeWidth={2.4} />
             </span>
-            <b className="tnum">{pct(yieldPct)}</b>
+            <b className="tnum">{fixed(yieldPct)}%</b>
             <span>{t(ui.pfYield)}</span>
           </div>
           <div>

@@ -63,6 +63,10 @@ export const num = (v: number) => nf.format(v);
 export const pct = (v: number, sign = true) =>
   `${sign && v > 0 ? "+" : ""}${v.toLocaleString("ru-RU", { maximumFractionDigits: 2 })}%`;
 
+/** Число с фиксированной точностью в русской записи: 23,7 (а не 23.7). */
+export const fixed = (v: number, digits = 1) =>
+  v.toLocaleString("ru-RU", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+
 export const shortDate = (iso: string) => {
   const d = new Date(iso);
   return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
@@ -72,13 +76,24 @@ export const shortDate = (iso: string) => {
 /*  Математика договора                                                */
 /* ------------------------------------------------------------------ */
 
+/** Период, за который показываем примерный доход. */
+export type IncomePeriod = "year" | "month" | "day";
+
 const DAY = 86_400_000;
 
+/**
+ * Дата договора приходит как "2026-02-12" — без времени. Конструктор `new
+ * Date(строка)` читает такую строку как UTC, и на UTC+6 сдвиг съедал сутки:
+ * начисление занижалось ровно на день. Разбираем как локальное начало дня.
+ */
+export const parseDate = (iso: string) =>
+  /^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(`${iso}T00:00:00`) : new Date(iso);
+
 const days = (from: string, to: Date) =>
-  Math.max(0, Math.floor((to.getTime() - new Date(from).getTime()) / DAY));
+  Math.max(0, Math.floor((to.getTime() - parseDate(from).getTime()) / DAY));
 
 const addMonths = (iso: string, months: number) => {
-  const d = new Date(iso);
+  const d = parseDate(iso);
   d.setMonth(d.getMonth() + months);
   return d;
 };
@@ -86,22 +101,46 @@ const addMonths = (iso: string, months: number) => {
 /** Дата окончания договора. */
 export const maturity = (c: Contract) => addMonths(c.opened, c.months);
 
+/** Сколько целых месяцев прошло с начала договора (по календарю). */
+export const monthsPassed = (c: Contract, now = new Date()) => {
+  const start = parseDate(c.opened);
+  if (now <= start) return 0;
+  const total =
+    (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+  return Math.max(0, Math.min(c.months, total + (now.getDate() >= start.getDate() ? 0 : -1)));
+};
+
+/** Сколько целых месяцев осталось до конца срока (0, если срок истёк). */
+export const monthsLeft = (c: Contract, now = new Date()) => {
+  const m = maturity(c);
+  if (m <= now) return 0;
+  const total = (m.getFullYear() - now.getFullYear()) * 12 + (m.getMonth() - now.getMonth());
+  const rest = m.getDate() - now.getDate();
+  return Math.max(0, total + (rest >= 0 ? 0 : -1));
+};
+
 /** Прошло ли больше половины срока — для подписи «в работе / к выплате». */
 export const isMature = (c: Contract, now = new Date()) => maturity(c) <= now;
 
-/** Начислено по договору на дату, $. Ставка простая, база 365 дней. */
+/** Дней в сроке договора по календарю — база всех денежных расчётов. */
+const termDays = (c: Contract) => {
+  const d = days(c.opened, maturity(c));
+  return d > 0 ? d : Math.round(c.months * 30.44);
+};
+
+/** Начислено по договору на дату, $. Ставка простая, база 365 дней.
+ *  После окончания срока начисление останавливается. */
 export const accrued = (c: Contract, now = new Date()) =>
-  (c.amount * c.rate * days(c.opened, now)) / 100 / 365;
+  (c.amount * c.rate * Math.min(days(c.opened, now), termDays(c))) / 100 / 365;
 
 /** Выплачено по графику: у «Ренты» — равными долями каждый месяц. */
 export const paidOut = (c: Contract, now = new Date()) => {
   if (c.product !== "rent") return 0;
-  const monthsPassed = Math.floor(days(c.opened, now) / 30.44);
-  return Math.min(c.months, monthsPassed) * monthlyPayout(c);
+  return monthsPassed(c, now) * monthlyPayout(c);
 };
 
-/** Ежемесячная выплата по «Ренте», $. */
-export const monthlyPayout = (c: Contract) => (c.amount * c.rate) / 100 / 12;
+/** Ежемесячная выплата по «Ренте»: доход за срок, поделённый на число месяцев. */
+export const monthlyPayout = (c: Contract) => termIncome(c) / c.months;
 
 /** Начислено, но ещё не выплачено. */
 export const pending = (c: Contract, now = new Date()) =>
@@ -110,8 +149,6 @@ export const pending = (c: Contract, now = new Date()) =>
 /** Стоимость позиции: тело договора плюс всё начисленное. */
 export const contractValue = (c: Contract, now = new Date()) => c.amount + accrued(c, now);
 
-/** Срок в годах — для расчёта дохода за весь период. */
-const termYears = (c: Contract) => c.months / 12;
 
 /** «1 договор», «2 договора», «5 договоров» / «2 келишим». */
 /** Только слово без числа: «договор / договора / договоров» — для подписи метрики. */
@@ -162,14 +199,32 @@ export const termLabel = (months: number, lang: "ru" | "ky") => {
   return `${y} ${y === 1 ? "год" : "года"}`;
 };
 
+/** Годовой доход по договору, $ (ставка от суммы). */
+export const annualIncome = (c: Contract) => (c.amount * c.rate) / 100;
+
+/**
+ * Примерный доход за период по одному договору.
+ * Год = ставка от суммы, месяц = год / 12, день = год / 365 —
+ * поэтому год, месяц и день всегда сходятся между собой.
+ */
+export const incomeFor = (c: Contract, period: IncomePeriod, now = new Date()) => {
+  if (isMature(c, now)) return 0;
+  const year = annualIncome(c);
+  if (period === "year") return year;
+  if (period === "month") return year / 12;
+  return year / 365;
+};
+
+/** Примерный доход по портфелю за период. */
+export const portfolioIncome = (contracts: Contract[], period: IncomePeriod, now = new Date()) =>
+  contracts.reduce((sum, c) => sum + incomeFor(c, period, now), 0);
+
 /** Доход за весь срок по ставке договора. */
-export const termIncome = (c: Contract) => (c.amount * c.rate * termYears(c)) / 100;
+export const termIncome = (c: Contract) => (c.amount * c.rate * termDays(c)) / 100 / 365;
 
 export const nextPayoutDate = (c: Contract, now = new Date()) => {
-  const start = new Date(c.opened);
-  const monthsPassed = Math.floor(days(c.opened, now) / 30.44);
-  const d = new Date(start);
-  d.setMonth(d.getMonth() + monthsPassed + 1);
+  const d = parseDate(c.opened);
+  d.setMonth(d.getMonth() + Math.min(monthsPassed(c, now) + 1, c.months));
   return d;
 };
 

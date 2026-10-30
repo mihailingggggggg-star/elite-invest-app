@@ -1,6 +1,6 @@
 import type { Contract, T } from "./data";
 import { assetById } from "./data";
-import { accrued, maturity, monthlyPayout, shortDate } from "./app";
+import { accrued, maturity, monthlyPayout, monthsPassed, parseDate, shortDate } from "./app";
 
 /**
  * Лента операций для главного экрана: подписания договоров, начисления
@@ -50,12 +50,10 @@ export function feed(contracts: Contract[], now = new Date()): Event[] {
 
     if (c.product === "rent") {
       /* Ближайшая прошедшая выплата по графику; будущие в ленту не попадают. */
-      const passed = Math.floor(
-        (now.getTime() - new Date(c.opened).getTime()) / 86_400_000 / 30.44
-      );
+      const passed = monthsPassed(c, now);
       if (passed >= 1) {
-        const d = new Date(c.opened);
-        d.setMonth(d.getMonth() + Math.min(passed, c.months));
+        const d = parseDate(c.opened);
+        d.setMonth(d.getMonth() + passed);
         out.push({
           id: `pay-${c.no}`,
           kind: "payout",

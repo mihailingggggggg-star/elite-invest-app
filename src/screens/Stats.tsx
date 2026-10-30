@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   CalendarDays,
   ChevronDown,
-  ChevronRight,
   Lock,
   Sprout,
 } from "lucide-react";
@@ -18,7 +17,19 @@ import {
   XAxis,
 } from "recharts";
 import { assetById, products, ui } from "../lib/data";
-import { accrued, contractValue, money, pct, useApp, useT } from "../lib/app";
+import {
+  accrued,
+  contractValue,
+  fixed,
+  parseDate,
+  contractsWord,
+  money,
+  pct,
+  portfolioIncome,
+  useApp,
+  useT,
+  type IncomePeriod,
+} from "../lib/app";
 import { Seg } from "../components/Seg";
 
 /**
@@ -30,6 +41,28 @@ import { Seg } from "../components/Seg";
 
 type Group = "product" | "city" | "object";
 
+/**
+ * Доли в процентах, которые в сумме дают ровно 100 (метод наибольших
+ * остатков): при обычном округлении 3 равные доли дали бы 99%.
+ */
+function shares(values: number[]): number[] {
+  const total = values.reduce((s, v) => s + v, 0);
+  if (!total) return values.map(() => 0);
+  const raw = values.map((v) => (v / total) * 100);
+  const floor = raw.map(Math.floor);
+  let rest = 100 - floor.reduce((s, v) => s + v, 0);
+  const order = raw
+    .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+    .sort((a, b) => b.frac - a.frac);
+  const out = [...floor];
+  for (const o of order) {
+    if (rest <= 0) break;
+    out[o.i] += 1;
+    rest -= 1;
+  }
+  return out;
+}
+
 /* Палитра пончика: хвоя → шалфей → крем, в духе бренда. */
 const PALETTE = ["#2b3a1e", "#4a663a", "#6f8f55", "#96b177", "#c1d2a9", "#e0d2b8"];
 
@@ -37,12 +70,12 @@ function parts(rows: { name: string; value: number }[], other: string) {
   const merged = new Map<string, number>();
   for (const r of rows) merged.set(r.name, (merged.get(r.name) ?? 0) + r.value);
   const sorted = [...merged.entries()]
-    .map(([name, value]) => ({ name, value: Math.round(value) }))
+    .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value);
   if (sorted.length <= 6) return sorted;
   const head = sorted.slice(0, 5);
   const tail = sorted.slice(5).reduce((s, r) => s + r.value, 0);
-  return [...head, { name: other, value: Math.round(tail) }];
+  return [...head, { name: other, value: tail }];
 }
 
 export function Stats({ onKyc, onBack }: { onKyc: () => void; onBack: () => void }) {
@@ -50,6 +83,7 @@ export function Stats({ onKyc, onBack }: { onKyc: () => void; onBack: () => void
   const { lang, user, contracts } = useApp();
   const [group, setGroup] = useState<Group>("object");
   const [months, setMonths] = useState(12);
+  const [incomePeriod, setIncomePeriod] = useState<IncomePeriod>("day");
   const now = new Date();
 
   const rows = useMemo(
@@ -71,7 +105,18 @@ export function Stats({ onKyc, onBack }: { onKyc: () => void; onBack: () => void
   const acc = rows.reduce((s, r) => s + r.acc, 0);
   const total = body + acc;
   const avgRate = rows.reduce((s, r) => s + r.c.rate * r.c.amount, 0) / (body || 1);
-  const monthly = rows.reduce((s, r) => s + (r.c.amount * r.c.rate) / 100 / 12, 0);
+  /* Доход считаем тем же хелпером, что и на главной, — цифры обязаны совпасть. */
+  const income = {
+    year: portfolioIncome(contracts, "year", now),
+    month: portfolioIncome(contracts, "month", now),
+    day: portfolioIncome(contracts, "day", now),
+  };
+  const contractsWordCount = contractsWord(contracts.length, lang);
+  const incomeLabel = {
+    year: t(ui.inYear),
+    month: t(ui.anPerMonth),
+    day: t(ui.inDay),
+  } as const;
 
   const data = useMemo(() => {
     if (group === "product")
@@ -96,7 +141,7 @@ export function Stats({ onKyc, onBack }: { onKyc: () => void; onBack: () => void
       Array.from({ length: months }, (_, i) => {
         /* первое число месяца: иначе 31-е «перепрыгивает» через короткий февраль */
         const d = new Date(now.getFullYear(), now.getMonth() - (months - 1 - i), 1);
-        const v = contracts.reduce((s, c) => s + (new Date(c.opened) <= d ? accrued(c, d) : 0), 0);
+        const v = contracts.reduce((s, c) => s + (parseDate(c.opened) <= d ? accrued(c, d) : 0), 0);
         return {
           /* три буквы, иначе 12 подписей не влезают в мобильный график */
           label: d.toLocaleDateString("ru-RU", { month: "short" }).replace(".", "").slice(0, 3),
@@ -212,34 +257,72 @@ export function Stats({ onKyc, onBack }: { onKyc: () => void; onBack: () => void
           <div className="an__leg" key={d.name}>
             <span className="an__dot" style={{ background: PALETTE[i % PALETTE.length] }} />
             <span className="an__leg-n">{d.name}</span>
-            <b className="tnum">{total ? Math.round((d.value / total) * 100) : 0}%</b>
+            <b className="tnum">{shares(data.map((x) => x.value))[i]}%</b>
           </div>
         ))}
       </div>
 
       <motion.div
-        className="an__insight"
+        className="an__income"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <span className="an__insight-i">
-          <Sprout size={19} strokeWidth={2} />
-        </span>
-        <div>
-          <b>
-            {money(Math.round(monthly))} {t(ui.anPerMonth)}
-          </b>
-          <p>
-            {avgRate.toFixed(1)}% {t(ui.perYear)} · {t(ui.anInsight)}
-          </p>
+        <div className="an__income-h">
+          <span className="an__income-i">
+            <Sprout size={17} strokeWidth={2} />
+          </span>
+          <span className="an__income-k">{t(ui.incomeApprox)}</span>
+          <div className="an__income-seg" role="tablist" aria-label={t(ui.incomeApprox)}>
+            {(["year", "month", "day"] as IncomePeriod[]).map((p) => (
+              <button
+                key={p}
+                type="button"
+                role="tab"
+                aria-selected={p === incomePeriod}
+                data-on={p === incomePeriod}
+                onClick={() => setIncomePeriod(p)}
+              >
+                {p === "year" ? t(ui.perYearShort) : p === "month" ? t(ui.perMonthShort) : t(ui.perDayShort)}
+              </button>
+            ))}
+          </div>
         </div>
-        <ChevronRight size={17} strokeWidth={2.2} />
+
+        <div className="an__income-v">
+          <b className="tnum">{money(income[incomePeriod], incomePeriod === "day" ? 2 : 0)}</b>
+          <i>{incomeLabel[incomePeriod]}</i>
+        </div>
+
+        <div className="an__income-f">
+          <span className="tnum">
+            {money(income.year)} {t(ui.inYear)}
+          </span>
+          <span className="an__income-sep" aria-hidden />
+          <span className="tnum">
+            {money(income.month)} {t(ui.anPerMonth)}
+          </span>
+          <span className="an__income-sep" aria-hidden />
+          <span className="tnum">
+            {money(income.day, 2)} {t(ui.inDay)}
+          </span>
+        </div>
+
+        <p className="an__income-note">
+          {fixed(avgRate)}% {t(ui.perYear)} · {contractsWordCount}
+        </p>
       </motion.div>
 
       <div className="an__head">
         <h2>{t(ui.anDynamics)}</h2>
-        <span className="an__period tnum">{pct(body ? (acc / body) * 100 : 0)}</span>
+        <button
+          className="an__period"
+          type="button"
+          onClick={() => setMonths((m) => (m === 12 ? 6 : 12))}
+        >
+          {months === 12 ? t(ui.months12) : t(ui.months6)}
+          <ChevronDown size={13} strokeWidth={2.4} />
+        </button>
       </div>
 
       <div className="an__bars">
@@ -272,6 +355,10 @@ export function Stats({ onKyc, onBack }: { onKyc: () => void; onBack: () => void
           {money(series[series.length - 1].value)}
         </span>
       </div>
+
+      <p className="an__note">
+        {pct(body ? (acc / body) * 100 : 0)} {t(ui.allTime)}
+      </p>
 
       <p className="demo">{t(ui.demoNames)}</p>
     </div>

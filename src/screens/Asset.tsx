@@ -15,7 +15,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { assetById, COMPANY, stages, ui } from "../lib/data";
-import { money, useApp, useT } from "../lib/app";
+import { contractValue, money, useApp, useT } from "../lib/app";
 
 /**
  * Карточка объекта 1:1 по референсу: галерея на весь верх со счётчиком кадров,
@@ -48,6 +48,7 @@ export function Asset({
   });
   const gal = useRef<HTMLDivElement>(null);
 
+  const now = new Date();
   const mine = contracts.filter((c) => c.assetId === a.id);
   const funded = Math.round((a.raised / a.target) * 100);
   const cur = Math.min(Math.max(a.stage - 1, 0), stages.length - 1);
@@ -270,7 +271,9 @@ export function Asset({
         <div className="dt__bar-l">
           <span>{mine.length ? t(ui.portfolio) : t(ui.minTicket)}</span>
           <b className="tnum">
-            {mine.length ? money(mine.reduce((s, c) => s + c.amount, 0)) : money(a.min)}
+            {mine.length
+              ? money(Math.round(mine.reduce((s, c) => s + contractValue(c, now), 0)))
+              : money(a.min)}
           </b>
         </div>
         <div className="dt__bar-r">

@@ -17,12 +17,13 @@ import {
   X,
 } from "lucide-react";
 import { assets, news, ui, type Asset as Obj } from "../lib/data";
-import { accrued, contractValue, money, objectsWord, pct, useApp, useT } from "../lib/app";
+import { accrued, contractValue, money, objectsWord, useApp, useT } from "../lib/app";
 import { eventDate, feed, type Event } from "../lib/feed";
 import { ActionChip, Pill, SectionHead, TxRow } from "../components/kit";
 import { HeroBg } from "../components/Hero";
 import { AccountIsland } from "../components/Island";
 import { ContractsRail } from "../components/ContractsRail";
+import { IncomeChip } from "../components/Income";
 
 const ICONS = {
   sign: FileSignature,
@@ -213,7 +214,6 @@ export function Home({
   const body = contracts.reduce((s, c) => s + c.amount, 0);
   const acc = contracts.reduce((s, c) => s + accrued(c, now), 0);
   const total = body + acc;
-  const diffPct = body ? (acc / body) * 100 : 0;
   const events = feed(contracts, now);
 
   const mineIds = new Set(contracts.map((c) => c.assetId));
@@ -258,10 +258,9 @@ export function Home({
               )}
             </span>
             {user ? (
-              <span className="delta">
-                <ArrowUpRight size={15} strokeWidth={2.4} />
-                {pct(diffPct)} {t(ui.allTime)}
-              </span>
+              contracts.length > 0 ? (
+                <IncomeChip contracts={contracts} />
+              ) : null
             ) : (
               <Pill icon={ShieldCheck}>{`${t(ui.license)} № 88`}</Pill>
             )}

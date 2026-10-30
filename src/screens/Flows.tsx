@@ -5,8 +5,10 @@ import "ldrs/react/Ring.css";
 import { assetById, assetProducts, COMPANY, news, products, ui, type ProductId } from "../lib/data";
 import {
   developmentRate,
+  fixed,
   money,
   shortDate,
+  termIncome,
   termLabel,
   termination,
   useApp,
@@ -153,11 +155,22 @@ export function Deal({ id, onClose }: { id: string; onClose: () => void }) {
   const min = products[product].min;
   const tooSmall = value < min;
   const sharePct = (value / a.target) * 100;
-  const income = (value * rate * (months / 12)) / 100;
 
   const openDate = new Date();
   const maturityDate = new Date(openDate);
   maturityDate.setMonth(maturityDate.getMonth() + months);
+
+  /* «Доход за срок» — ровно то, что начислит договор: та же формула, что в accrued() */
+  const income = termIncome({
+    no: "",
+    assetId: a.id,
+    product,
+    amount: value,
+    rate,
+    opened: openDate.toISOString().slice(0, 10),
+    months,
+    signed: false,
+  });
 
   const sign = () => {
     const code = nextContractNo();
@@ -271,7 +284,7 @@ export function Deal({ id, onClose }: { id: string; onClose: () => void }) {
                   )}
 
                   <div className="dl" style={{ padding: "4px 4px 0" }}>
-                    <Row k={t(ui.share)} v={`${sharePct.toFixed(2)}%`} />
+                    <Row k={t(ui.share)} v={`${fixed(sharePct, 2)}%`} />
                     <Row k={t(ui.calcIncome)} v={money(Math.round(income))} accent />
                   </div>
 
@@ -305,7 +318,7 @@ export function Deal({ id, onClose }: { id: string; onClose: () => void }) {
                       <Row k={t(ui.payout)} v={products[product].payout[lang]} />
                       <Row k={t(ui.openDate)} v={shortDate(openDate.toISOString())} />
                       <Row k={t(ui.maturity)} v={shortDate(maturityDate.toISOString())} />
-                      <Row k={t(ui.share)} v={`${sharePct.toFixed(2)}%`} />
+                      <Row k={t(ui.share)} v={`${fixed(sharePct, 2)}%`} />
                     </div>
 
                     <p className="offer__note">{t(ui.offerNote)}</p>

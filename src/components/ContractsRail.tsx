@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronRight, ShieldCheck } from "lucide-react";
 import { assetById, products, ui, type Contract } from "../lib/data";
-import { contractValue, money, monthlyPayout, pct, useApp, useT } from "../lib/app";
+import { contractValue, money, monthlyPayout, monthsLeft, pct, useApp, useT } from "../lib/app";
 
 /**
  * Слайдер договоров. Карусель — embla-carousel-react
@@ -98,14 +98,7 @@ export function ContractsRail({
             const a = assetById(c.assetId);
             const val = contractValue(c, now);
             const d = ((val - c.amount) / c.amount) * 100;
-            const left = Math.max(
-              0,
-              Math.ceil(
-                (new Date(new Date(c.opened).setMonth(new Date(c.opened).getMonth() + c.months)).getTime() -
-                  now.getTime()) /
-                  2_629_800_000
-              )
-            );
+            const left = monthsLeft(c, now);
 
             return (
               <div className="ctr__slide" key={c.no}>
