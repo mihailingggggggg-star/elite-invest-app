@@ -120,8 +120,15 @@ export function ContractsRail({
                   }}
                 >
 
-                  <div className="ctr__top">
-                    <img className="ctr__img" src={`${import.meta.env.BASE_URL}obj/${a.img}`} alt="" loading="lazy" />
+                  {/* крупное фото объекта — во всю ширину карточки */}
+                  <div className="ctr__photo">
+                    <img
+                      className="ctr__img"
+                      src={`${import.meta.env.BASE_URL}obj/${a.img}`}
+                      alt=""
+                      loading="lazy"
+                    />
+                    <span className="ctr__rate tnum">{c.rate}%</span>
                     <div className="ctr__head">
                       <span className="ctr__no tnum">
                         {t(ui.contractNo)} {c.no}
@@ -131,46 +138,47 @@ export function ContractsRail({
                         {products[c.product].name[lang]} · {c.months} {t(ui.monthsShort)}
                       </span>
                     </div>
-                    <span className="ctr__rate tnum">{c.rate}%</span>
                   </div>
 
-                  <div className="ctr__sum">
-                    <b className="tnum">{money(Math.round(val))}</b>
-                    <i className={`tnum ${d < 0 ? "down" : "up"}`}>{pct(d)}</i>
-                  </div>
+                  <div className="ctr__body">
+                    <div className="ctr__sum">
+                      <b className="tnum">{money(Math.round(val))}</b>
+                      <i className={`tnum ${d < 0 ? "down" : "up"}`}>{pct(d)}</i>
+                    </div>
 
-                  <span className="ctr__perf" aria-hidden />
+                    <span className="ctr__perf" aria-hidden />
 
-                  <div className="ctr__facts">
-                    <span>
-                      <i>{t(ui.accrued)}</i>
-                      <b className="tnum">{money(Math.round(val - c.amount))}</b>
-                    </span>
-                    <span>
-                      <i>{t(ui.payout)}</i>
-                      <b className="tnum">{money(Math.round(monthlyPayout(c)))}</b>
-                    </span>
-                    <span>
-                      <i>{t(ui.ctrLeft)}</i>
-                      <b className="tnum">
-                        {left} {t(ui.monthsShort)}
-                      </b>
-                    </span>
-                  </div>
-
-                  <div className="ctr__foot">
-                    {c.signed ? (
-                      <span className="ctr__stamp" aria-hidden>
-                        <ShieldCheck size={11} strokeWidth={2.6} />
-                        {t(ui.esign)}
+                    <div className="ctr__facts">
+                      <span>
+                        <i>{t(ui.accrued)}</i>
+                        <b className="tnum">{money(Math.round(val - c.amount))}</b>
                       </span>
-                    ) : (
-                      <span />
-                    )}
-                    <button className="ctr__open" type="button" onClick={() => onOpen(a.id)}>
-                      {t(ui.openObject)}
-                      <ChevronRight size={14} strokeWidth={2.4} />
-                    </button>
+                      <span>
+                        <i>{t(ui.payout)}</i>
+                        <b className="tnum">{money(Math.round(monthlyPayout(c)))}</b>
+                      </span>
+                      <span>
+                        <i>{t(ui.ctrLeft)}</i>
+                        <b className="tnum">
+                          {left} {t(ui.monthsShort)}
+                        </b>
+                      </span>
+                    </div>
+
+                    <div className="ctr__foot">
+                      {c.signed ? (
+                        <span className="ctr__stamp" aria-hidden>
+                          <ShieldCheck size={11} strokeWidth={2.6} />
+                          {t(ui.esign)}
+                        </span>
+                      ) : (
+                        <span />
+                      )}
+                      <button className="ctr__open" type="button" onClick={() => onOpen(a.id)}>
+                        {t(ui.openObject)}
+                        <ChevronRight size={14} strokeWidth={2.4} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
